@@ -1,5 +1,5 @@
 {
-  "name": "react-shadcn-starter",
+  "name": "supplier-ui",
   "private": true,
   "version": "1.0",
   "type": "module",
@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "build:gh": "tsc -b && cross-env VITE_BASE_URL=/react-shadcn-starter/ VITE_USE_HASH_ROUTE=true vite build"
+    "build:gh": "tsc -b && cross-env VITE_BASE_URL=/supplier-ui/ VITE_USE_HASH_ROUTE=true vite build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
