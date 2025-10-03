@@ -41,6 +41,10 @@ export const mainMenu: MenuType = [
                 title: 'Sign In',
                 url: '/pages/login',
             },
+            {
+                title: 'Sign Up',
+                url: '/pages/signup',
+            },
         ]
     },
     {

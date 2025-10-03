@@ -118,7 +118,9 @@ export function AppHeader() {
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>Log out</DropdownMenuItem>
+                                <DropdownMenuItem asChild>
+                                    <Link to="/pages/login">Log out</Link>
+                                </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </nav>

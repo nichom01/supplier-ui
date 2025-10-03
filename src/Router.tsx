@@ -6,6 +6,7 @@ import Sample from './pages/Sample'
 import ComingSoon from './pages/ComingSoon'
 import Chart from './pages/Chart'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
 
 export default function Router() {
     return (
@@ -17,6 +18,7 @@ export default function Router() {
                     <Route path="feature" element={<ComingSoon />} />
                     <Route path="chart" element={<Chart />} />
                     <Route path="login" element={<Login />} />
+                    <Route path="signup" element={<Signup />} />
                 </Route>
                 <Route path="*" element={<NotMatch />} />
             </Route>
