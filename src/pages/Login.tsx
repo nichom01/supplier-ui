@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { PageHeader, PageHeaderHeading } from "@/components/page-header";
 import {
@@ -27,7 +28,9 @@ export default function Login() {
           Enter your email below to login to your account
         </CardDescription>
         <CardAction>
-          <Button variant="link">Sign Up</Button>
+          <Button variant="link" asChild>
+            <Link to="/pages/signup">Sign Up</Link>
+          </Button>
         </CardAction>
       </CardHeader>
       <CardContent>
