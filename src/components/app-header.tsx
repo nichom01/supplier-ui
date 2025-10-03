@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { mainMenu } from '@/config/menu'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/contexts/ThemeContext'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -9,7 +11,18 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ChevronDown } from 'lucide-react'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { ChevronDown, Settings } from 'lucide-react'
 import { AppLogo } from './app-logo'
 import { AppSidebar } from './app-sidebar'
 import { Button, buttonVariants } from './ui/button'
@@ -19,6 +32,14 @@ import GitHub from './icons/github'
 
 export function AppHeader() {
     const location = useLocation()
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+    const { theme, setTheme, primaryColor, setPrimaryColor } = useTheme()
+
+    const isDarkMode = theme === "dark"
+
+    const toggleDarkMode = (checked: boolean) => {
+        setTheme(checked ? "dark" : "light")
+    }
 
     return (
         <header className="bg-background sticky top-0 z-50 border-b">
@@ -82,6 +103,82 @@ export function AppHeader() {
                         </nav>
                     </div>
                     <nav className="flex gap-1">
+                        <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+                            <DialogTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="size-8"
+                                >
+                                    <Settings className="size-4" />
+                                    <span className="sr-only">Settings</span>
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Settings</DialogTitle>
+                                    <DialogDescription>
+                                        Configure your application settings here.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-6 py-4">
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-0.5">
+                                            <Label htmlFor="dark-mode">Dark Mode</Label>
+                                            <div className="text-sm text-muted-foreground">
+                                                Toggle between light and dark theme
+                                            </div>
+                                        </div>
+                                        <Switch
+                                            id="dark-mode"
+                                            checked={isDarkMode}
+                                            onCheckedChange={toggleDarkMode}
+                                        />
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <Label htmlFor="primary-color">Primary Color</Label>
+                                        <Select value={primaryColor} onValueChange={setPrimaryColor}>
+                                            <SelectTrigger id="primary-color">
+                                                <SelectValue placeholder="Select a color" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="red">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-4 h-4 rounded-full bg-[oklch(0.637_0.237_25.331)]" />
+                                                        <span>Red</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="blue">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-4 h-4 rounded-full bg-[oklch(0.552_0.196_254.604)]" />
+                                                        <span>Blue</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="green">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-4 h-4 rounded-full bg-[oklch(0.548_0.166_158.828)]" />
+                                                        <span>Green</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="purple">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-4 h-4 rounded-full bg-[oklch(0.583_0.197_293.756)]" />
+                                                        <span>Purple</span>
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="orange">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-4 h-4 rounded-full bg-[oklch(0.656_0.197_50.598)]" />
+                                                        <span>Orange</span>
+                                                    </div>
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                         <a
                             href={appConfig.github.url}
                             title={appConfig.github.title}

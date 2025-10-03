@@ -1,6 +1,6 @@
 "use client"
 
-import { Bar, BarChart, XAxis } from "recharts"
+import { Bar, BarChart, XAxis, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell, Legend, LineChart, Line } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { PageHeader, PageHeaderHeading } from "@/components/page-header";
@@ -37,6 +37,23 @@ const generateDailyData = () => {
 
 const dailyChartData = generateDailyData()
 
+const radarChartData = [
+  { category: "Performance", desktop: 186, mobile: 120 },
+  { category: "Security", desktop: 305, mobile: 200 },
+  { category: "Reliability", desktop: 237, mobile: 180 },
+  { category: "Usability", desktop: 273, mobile: 190 },
+  { category: "Efficiency", desktop: 209, mobile: 150 },
+]
+
+const pieChartData = [
+  { name: "NullPointer", value: 285, fill: "#2563eb" },
+  { name: "Timeout", value: 200, fill: "#60a5fa" },
+  { name: "Validation", value: 187, fill: "#10b981" },
+  { name: "Network", value: 173, fill: "#f59e0b" },
+  { name: "Database", value: 90, fill: "#ef4444" },
+  { name: "Other", value: 65, fill: "#8b5cf6" },
+]
+
 const chartConfig = {
   desktop: {
     label: "Desktop",
@@ -45,6 +62,33 @@ const chartConfig = {
   mobile: {
     label: "Mobile",
     color: "#60a5fa",
+  },
+} satisfies ChartConfig
+
+const pieChartConfig = {
+  NullPointer: {
+    label: "NullPointer",
+    color: "#2563eb",
+  },
+  Timeout: {
+    label: "Timeout",
+    color: "#60a5fa",
+  },
+  Validation: {
+    label: "Validation",
+    color: "#10b981",
+  },
+  Network: {
+    label: "Network",
+    color: "#f59e0b",
+  },
+  Database: {
+    label: "Database",
+    color: "#ef4444",
+  },
+  Other: {
+    label: "Other",
+    color: "#8b5cf6",
   },
 } satisfies ChartConfig
 
@@ -144,26 +188,74 @@ export default function Chart() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="shadow-lg">
               <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-              <BarChart accessibilityLayer data={chartData}>
-                  <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-                  <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-              </BarChart>
+              <RadarChart data={radarChartData}>
+                  <PolarGrid />
+                  <PolarAngleAxis dataKey="category" />
+                  <PolarRadiusAxis />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Radar
+                    dataKey="desktop"
+                    stroke="var(--color-desktop)"
+                    fill="var(--color-desktop)"
+                    fillOpacity={0.6}
+                  />
+                  <Radar
+                    dataKey="mobile"
+                    stroke="var(--color-mobile)"
+                    fill="var(--color-mobile)"
+                    fillOpacity={0.6}
+                  />
+              </RadarChart>
               </ChartContainer>
           </Card>
           <Card className="shadow-md">
               <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-              <BarChart accessibilityLayer data={chartData}>
-                  <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-                  <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-              </BarChart>
+              <LineChart data={chartData}>
+                  <XAxis
+                    dataKey="month"
+                    tickLine={false}
+                    axisLine={false}
+                    tickMargin={8}
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Line
+                    type="monotone"
+                    dataKey="desktop"
+                    stroke="var(--color-desktop)"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="mobile"
+                    stroke="var(--color-mobile)"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={false}
+                  />
+              </LineChart>
               </ChartContainer>
           </Card>
           <Card>
-              <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
-              <BarChart accessibilityLayer data={chartData}>
-                  <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-                  <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-              </BarChart>
+              <ChartContainer config={pieChartConfig} className="min-h-[200px] w-full">
+              <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Pie
+                    data={pieChartData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={(entry) => `${entry.name}: ${((entry.value / pieChartData.reduce((sum, item) => sum + item.value, 0)) * 100).toFixed(1)}%`}
+                  >
+                    {pieChartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Legend />
+              </PieChart>
               </ChartContainer>
           </Card>
         </div>
