@@ -67,3 +67,7 @@ This project is configured with the shadcn/ui MCP server for adding components:
 
 ## GitHub Pages Setup
 The repository includes a GitHub Actions workflow (`.github/workflows/build-and-deploy.yml`) for deploying to gh-pages branch. Currently set to manual trigger (`workflow_dispatch`). To enable auto-deploy on push to main, uncomment the push trigger in the workflow file.
+
+## Git Commit Guidelines
+- Commit messages should NOT mention Claude or AI assistance
+- Focus commit messages on what was changed and why, not how it was created
