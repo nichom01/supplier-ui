@@ -1,0 +1,69 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Tech Stack
+
+- **React 19** with TypeScript
+- **Vite** - Build tool and dev server
+- **shadcn/ui** - UI component library built on Radix UI primitives
+- **Tailwind CSS v4** - Styling with `@tailwindcss/vite` plugin
+- **React Router v7** - Client-side routing
+
+## MCP Servers
+
+This project is configured with the shadcn/ui MCP server for adding components:
+- Configuration: `.mcp.json` in project root
+- After restarting Claude Code, use `/mcp` to verify the shadcn server is connected
+- Use natural language to browse, search, and install shadcn/ui components
+
+## Common Commands
+
+### Development
+- `npm install` - Install dependencies
+- `npm run dev` - Start development server with Vite
+- `npm run build` - TypeScript compilation + production build
+- `npm run preview` - Preview production build locally
+- `npm run lint` - Run ESLint
+
+### GitHub Pages Deployment
+- `npm run build:gh` - Build for GitHub Pages (sets base URL and enables hash routing)
+
+## Architecture
+
+### Router Configuration
+- App supports two routing modes via `VITE_USE_HASH_ROUTE` env var:
+  - `false` (default): BrowserRouter for standard SPA routing
+  - `true`: HashRouter for GitHub Pages deployment
+- Router selection happens in `src/App.tsx:5`
+- All routes defined in `src/Router.tsx` under `<AppLayout />` wrapper
+
+### Layout Structure
+- `src/components/app-layout.tsx` - Root layout with header, content area, and footer
+- Uses Outlet from react-router for nested route rendering
+- Responsive layout with max-width container (max-w-7xl)
+
+### Configuration System
+- `src/config/app.ts` - App metadata and GitHub info, reads `VITE_APP_NAME` and `VITE_BASE_URL` from env
+- `src/config/menu.ts` - Navigation menu structure with icons from lucide-react
+- Menu items support nested routes via `items` array
+
+### Theme System
+- `src/contexts/ThemeContext.tsx` - Global theme management
+- Supports "light", "dark", and "system" modes
+- Persists theme preference to localStorage with key "shadcn-ui-theme"
+- System theme auto-detects via `prefers-color-scheme` media query
+
+### Component Organization
+- `src/components/ui/` - shadcn/ui primitives (button, card, etc.)
+- `src/components/` - App-specific components (header, sidebar, etc.)
+- `src/pages/` - Route components
+- Path alias `@/*` maps to `src/*` (configured in vite.config.ts and tsconfig.json)
+
+### Environment Variables
+- `VITE_BASE_URL` - Base URL for deployment (default: "/")
+- `VITE_USE_HASH_ROUTE` - Enable hash routing (default: false)
+- `VITE_APP_NAME` - Application name (default: "UI Builder")
+
+## GitHub Pages Setup
+The repository includes a GitHub Actions workflow (`.github/workflows/build-and-deploy.yml`) for deploying to gh-pages branch. Currently set to manual trigger (`workflow_dispatch`). To enable auto-deploy on push to main, uncomment the push trigger in the workflow file.
