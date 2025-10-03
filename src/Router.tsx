@@ -3,6 +3,7 @@ import { AppLayout } from './components/app-layout'
 import NotMatch from './pages/NotMatch'
 import Dashboard from './pages/Dashboard'
 import Sample from './pages/Sample'
+import ProductMaintenance from './pages/ProductMaintenance'
 import ComingSoon from './pages/ComingSoon'
 import Chart from './pages/Chart'
 import Login from './pages/Login'
@@ -15,6 +16,7 @@ export default function Router() {
                 <Route path="" element={<Dashboard />} />
                 <Route path="pages">
                     <Route path="sample" element={<Sample />} />
+                    <Route path="product-maintenance" element={<ProductMaintenance />} />
                     <Route path="feature" element={<ComingSoon />} />
                     <Route path="chart" element={<Chart />} />
                     <Route path="login" element={<Login />} />

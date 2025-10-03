@@ -30,6 +30,10 @@ export const mainMenu: MenuType = [
                 url: '/pages/sample',
             },
             {
+                title: 'Product Maintenance',
+                url: '/pages/product-maintenance',
+            },
+            {
                 title: 'Coming Soon',
                 url: '/pages/feature',
             },
