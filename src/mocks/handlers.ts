@@ -2,13 +2,14 @@ import { http, HttpResponse, delay } from 'msw'
 import { mockProducts } from './data/products'
 import { mockCustomers } from './data/customers'
 import { mockSalesOrders, mockSalesOrderLines } from './data/salesOrders'
+import { mockPurchaseOrders, mockPOLineItems } from './data/purchaseOrders'
 import { mockMonthlyChartData, mockDailyChartData, mockRadarChartData, mockPieChartData } from './data/charts'
 import { mockAssets, mockAssetAvailability } from './data/assets'
 import { mockUsers, mockPasswords } from './data/users'
 import { mockPricing } from './data/pricing'
 import { mockSuppliers } from './data/suppliers'
 import { mockSupplierPricing } from './data/supplier-pricing'
-import { Product, Customer, SalesOrder, SalesOrderLine, BasketItem, User, AuthCredentials, SignUpData, DefaultPricing, PricingUpdateRequest, BulkPricingUpdateRequest, Supplier, SupplierPricing, SupplierPricingUpdateRequest, BulkSupplierPricingUpdateRequest } from '@/types'
+import { Product, Customer, SalesOrder, SalesOrderLine, PurchaseOrder, POLineItem, BasketItem, User, AuthCredentials, SignUpData, DefaultPricing, PricingUpdateRequest, BulkPricingUpdateRequest, Supplier, SupplierPricing, SupplierPricingUpdateRequest, BulkSupplierPricingUpdateRequest } from '@/types'
 
 // In-memory storage for products (simulates a database)
 let products = [...mockProducts]
@@ -19,6 +20,10 @@ let customers = [...mockCustomers]
 // In-memory storage for sales orders
 let salesOrders = [...mockSalesOrders]
 let salesOrderLines = [...mockSalesOrderLines]
+
+// In-memory storage for purchase orders
+let purchaseOrders = [...mockPurchaseOrders]
+let poLineItems = [...mockPOLineItems]
 
 // In-memory storage for shopping basket (session-based, would typically use cookies/sessions)
 let basket: BasketItem[] = []
@@ -972,5 +977,102 @@ export const handlers = [
             results,
             errors
         })
+    }),
+
+    // Purchase Order endpoints
+    // Get all purchase orders
+    http.get('/api/purchase-orders', async () => {
+        await delay(300)
+        return HttpResponse.json({ orders: purchaseOrders })
+    }),
+
+    // Get single purchase order with lines and supplier name
+    http.get('/api/purchase-orders/:id', async ({ params }) => {
+        await delay(200)
+        const { id } = params
+        const order = purchaseOrders.find(o => o.po_id === Number(id))
+
+        if (!order) {
+            return new HttpResponse(null, { status: 404 })
+        }
+
+        const lines = poLineItems.filter(l => l.po_id === Number(id))
+        const supplier = suppliers.find(s => s.supplier_id === order.supplier_id)
+
+        return HttpResponse.json({
+            ...order,
+            lines,
+            supplier_name: supplier?.name
+        })
+    }),
+
+    // Create purchase order
+    http.post('/api/purchase-orders', async ({ request }) => {
+        await delay(500)
+        const { supplier_id, delivery_date, lines } = await request.json() as {
+            supplier_id: number
+            delivery_date: string
+            lines: { product_id: number, quantity_ordered: number, unit_price: number }[]
+        }
+
+        if (!lines || lines.length === 0) {
+            return HttpResponse.json({ error: 'No line items provided' }, { status: 400 })
+        }
+
+        // Verify supplier exists
+        const supplier = suppliers.find(s => s.supplier_id === supplier_id)
+        if (!supplier) {
+            return HttpResponse.json({ error: 'Supplier not found' }, { status: 404 })
+        }
+
+        // Create order
+        const newOrderId = Math.max(0, ...purchaseOrders.map(o => o.po_id || 0)) + 1
+
+        const total = lines.reduce((sum, line) => sum + (line.quantity_ordered * line.unit_price), 0)
+
+        const newOrder: PurchaseOrder = {
+            po_id: newOrderId,
+            supplier_id,
+            order_date: new Date().toISOString(),
+            delivery_date,
+            status: 'pending',
+            total_amount: total
+        }
+
+        purchaseOrders.push(newOrder)
+
+        // Create order lines
+        const newLines: POLineItem[] = lines.map((line, index) => ({
+            line_item_id: Math.max(0, ...poLineItems.map(l => l.line_item_id || 0)) + index + 1,
+            po_id: newOrderId,
+            product_id: line.product_id,
+            quantity_ordered: line.quantity_ordered,
+            unit_price: line.unit_price,
+            status: 'pending'
+        }))
+
+        poLineItems.push(...newLines)
+
+        return HttpResponse.json({
+            ...newOrder,
+            lines: newLines,
+            supplier_name: supplier.name
+        }, { status: 201 })
+    }),
+
+    // Update purchase order status
+    http.patch('/api/purchase-orders/:id', async ({ params, request }) => {
+        await delay(400)
+        const { id } = params
+        const updates = await request.json() as Partial<PurchaseOrder>
+
+        const index = purchaseOrders.findIndex(o => o.po_id === Number(id))
+
+        if (index === -1) {
+            return new HttpResponse(null, { status: 404 })
+        }
+
+        purchaseOrders[index] = { ...purchaseOrders[index], ...updates }
+        return HttpResponse.json(purchaseOrders[index])
     }),
 ]

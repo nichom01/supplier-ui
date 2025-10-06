@@ -256,3 +256,32 @@ export type BulkSupplierPricingUpdateRequest = {
 export type SupplierPricingResponse = {
     pricing: SupplierPricing[]
 }
+
+// Purchase Order types
+export type PurchaseOrder = {
+    po_id?: number
+    supplier_id: number
+    order_date: string
+    delivery_date: string
+    status: 'draft' | 'pending' | 'confirmed' | 'received' | 'cancelled'
+    total_amount: number
+}
+
+export type POLineItem = {
+    line_item_id?: number
+    po_id?: number
+    product_id: number
+    quantity_ordered: number
+    unit_price: number
+    status: 'pending' | 'confirmed' | 'received' | 'cancelled'
+}
+
+// Purchase Order API Response types
+export type PurchaseOrdersResponse = {
+    orders: PurchaseOrder[]
+}
+
+export type PurchaseOrderWithLines = PurchaseOrder & {
+    lines: POLineItem[]
+    supplier_name?: string
+}

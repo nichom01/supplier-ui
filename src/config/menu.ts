@@ -5,7 +5,8 @@ import {
     Settings,
     CircleHelp,
     LucideIcon,
-    Home
+    Home,
+    ShoppingBag
 } from 'lucide-react'
 
 type MenuItemType = {
@@ -42,6 +43,11 @@ export const mainMenu: MenuType = [
                 title: 'Orders',
                 url: '/orders',
                 icon: Package
+            },
+            {
+                title: 'Purchase Orders',
+                url: '/purchase-orders',
+                icon: ShoppingBag
             },
             {
                 title: 'Product Maintenance',

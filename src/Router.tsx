@@ -21,6 +21,9 @@ import Basket from './pages/Basket'
 import Checkout from './pages/Checkout'
 import Orders from './pages/Orders'
 import OrderConfirmation from './pages/OrderConfirmation'
+import PurchaseOrders from './pages/PurchaseOrders'
+import CreatePurchaseOrder from './pages/CreatePurchaseOrder'
+import PurchaseOrderDetail from './pages/PurchaseOrderDetail'
 
 export default function Router() {
     return (
@@ -75,6 +78,21 @@ export default function Router() {
                 <Route path="orders/:id" element={
                     <ProtectedRoute allowedRoles={['user', 'employee', 'admin']}>
                         <OrderConfirmation />
+                    </ProtectedRoute>
+                } />
+                <Route path="purchase-orders" element={
+                    <ProtectedRoute allowedRoles={['employee', 'admin']}>
+                        <PurchaseOrders />
+                    </ProtectedRoute>
+                } />
+                <Route path="purchase-orders/new" element={
+                    <ProtectedRoute allowedRoles={['employee', 'admin']}>
+                        <CreatePurchaseOrder />
+                    </ProtectedRoute>
+                } />
+                <Route path="purchase-orders/:id" element={
+                    <ProtectedRoute allowedRoles={['employee', 'admin']}>
+                        <PurchaseOrderDetail />
                     </ProtectedRoute>
                 } />
 
