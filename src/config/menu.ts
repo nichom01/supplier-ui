@@ -2,6 +2,8 @@ import {
     CircleAlert,
     Files,
     Gauge,
+    ShoppingCart,
+    Package,
     LucideIcon
 } from 'lucide-react'
 
@@ -21,6 +23,16 @@ export const mainMenu: MenuType = [
         icon: Gauge
     },
     {
+        title: 'Shop',
+        url: '/products',
+        icon: ShoppingCart
+    },
+    {
+        title: 'Orders',
+        url: '/orders',
+        icon: Package
+    },
+    {
         title: 'Pages',
         url: '/pages',
         icon: Files,
@@ -32,6 +44,10 @@ export const mainMenu: MenuType = [
             {
                 title: 'Product Maintenance',
                 url: '/pages/product-maintenance',
+            },
+            {
+                title: 'Customer Maintenance',
+                url: '/pages/customer-maintenance',
             },
             {
                 title: 'Coming Soon',

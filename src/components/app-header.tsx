@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { mainMenu } from '@/config/menu'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useCart } from '@/contexts/CartContext'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,7 +23,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { ChevronDown, Settings } from 'lucide-react'
+import { ChevronDown, Settings, ShoppingCart } from 'lucide-react'
 import { AppLogo } from './app-logo'
 import { AppSidebar } from './app-sidebar'
 import { Button, buttonVariants } from './ui/button'
@@ -34,8 +35,10 @@ export function AppHeader() {
     const location = useLocation()
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
     const { theme, setTheme, primaryColor, setPrimaryColor } = useTheme()
+    const { cart } = useCart()
 
     const isDarkMode = theme === "dark"
+    const cartItemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0)
 
     const toggleDarkMode = (checked: boolean) => {
         setTheme(checked ? "dark" : "light")
@@ -103,6 +106,21 @@ export function AppHeader() {
                         </nav>
                     </div>
                     <nav className="flex gap-1">
+                        <Link to="/cart">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 relative"
+                            >
+                                <ShoppingCart className="size-4" />
+                                {cartItemCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-semibold">
+                                        {cartItemCount > 9 ? '9+' : cartItemCount}
+                                    </span>
+                                )}
+                                <span className="sr-only">Shopping Cart ({cartItemCount} items)</span>
+                            </Button>
+                        </Link>
                         <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
                             <DialogTrigger asChild>
                                 <Button
