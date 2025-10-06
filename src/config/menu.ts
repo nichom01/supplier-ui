@@ -58,6 +58,10 @@ export const mainMenu: MenuType = [
                 url: '/pages/supplier-maintenance',
             },
             {
+                title: 'Supplier Pricing Maintenance',
+                url: '/pages/supplier-pricing-maintenance',
+            },
+            {
                 title: 'Coming Soon',
                 url: '/pages/feature',
             },

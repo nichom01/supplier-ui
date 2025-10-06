@@ -223,3 +223,34 @@ export type Supplier = {
 export type SuppliersResponse = {
     suppliers: Supplier[]
 }
+
+// Supplier Pricing types
+export type SupplierPricing = {
+    supplier_pricing_id?: number
+    supplier_id: number
+    supplier_name: string
+    product_id: number
+    sku: string
+    product_name: string
+    product_type: 'sale' | 'hire'
+    price?: number  // For sale products
+    daily_hire_rate?: number  // For hire products
+    effective_from: string
+    effective_to?: string
+}
+
+export type SupplierPricingUpdateRequest = {
+    supplier_id: number
+    product_id: number
+    price?: number
+    daily_hire_rate?: number
+    effective_from: string
+}
+
+export type BulkSupplierPricingUpdateRequest = {
+    updates: SupplierPricingUpdateRequest[]
+}
+
+export type SupplierPricingResponse = {
+    pricing: SupplierPricing[]
+}

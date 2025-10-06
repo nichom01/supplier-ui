@@ -7,7 +7,8 @@ import { mockAssets, mockAssetAvailability } from './data/assets'
 import { mockUsers, mockPasswords } from './data/users'
 import { mockPricing } from './data/pricing'
 import { mockSuppliers } from './data/suppliers'
-import { Product, Customer, SalesOrder, SalesOrderLine, BasketItem, User, AuthCredentials, SignUpData, DefaultPricing, PricingUpdateRequest, BulkPricingUpdateRequest, Supplier } from '@/types'
+import { mockSupplierPricing } from './data/supplier-pricing'
+import { Product, Customer, SalesOrder, SalesOrderLine, BasketItem, User, AuthCredentials, SignUpData, DefaultPricing, PricingUpdateRequest, BulkPricingUpdateRequest, Supplier, SupplierPricing, SupplierPricingUpdateRequest, BulkSupplierPricingUpdateRequest } from '@/types'
 
 // In-memory storage for products (simulates a database)
 let products = [...mockProducts]
@@ -35,6 +36,9 @@ let pricing = [...mockPricing]
 
 // In-memory storage for suppliers (simulates a database)
 let suppliers = [...mockSuppliers]
+
+// In-memory storage for supplier pricing
+let supplierPricing = [...mockSupplierPricing]
 
 // In-memory session storage (token -> user_id)
 const sessions: Record<string, number> = {}
@@ -826,5 +830,147 @@ export const handlers = [
 
         suppliers.splice(index, 1)
         return new HttpResponse(null, { status: 204 })
+    }),
+
+    // Supplier Pricing endpoints
+    // Get all supplier pricing (optionally filtered by supplier)
+    http.get('/api/supplier-pricing', async ({ request }) => {
+        await delay(300)
+        const url = new URL(request.url)
+        const supplierId = url.searchParams.get('supplier_id')
+
+        if (supplierId) {
+            const filtered = supplierPricing.filter(p => p.supplier_id === Number(supplierId) && !p.effective_to)
+            return HttpResponse.json({ pricing: filtered })
+        }
+
+        // Return only active pricing (no effective_to date)
+        const activePricing = supplierPricing.filter(p => !p.effective_to)
+        return HttpResponse.json({ pricing: activePricing })
+    }),
+
+    // Get pricing for a specific supplier and product
+    http.get('/api/supplier-pricing/:supplierId/:productId', async ({ params }) => {
+        await delay(200)
+        const { supplierId, productId } = params
+        const pricing = supplierPricing.find(
+            p => p.supplier_id === Number(supplierId) &&
+                 p.product_id === Number(productId) &&
+                 !p.effective_to
+        )
+
+        if (!pricing) {
+            return new HttpResponse(null, { status: 404 })
+        }
+
+        return HttpResponse.json(pricing)
+    }),
+
+    // Update a single supplier pricing record
+    http.put('/api/supplier-pricing/:supplierId/:productId', async ({ request, params }) => {
+        await delay(400)
+        const { supplierId, productId } = params
+        const update = await request.json() as SupplierPricingUpdateRequest
+
+        // Find the current active pricing (one without effective_to date)
+        const index = supplierPricing.findIndex(
+            p => p.supplier_id === Number(supplierId) &&
+                 p.product_id === Number(productId) &&
+                 !p.effective_to
+        )
+
+        if (index === -1) {
+            return HttpResponse.json(
+                { message: 'Active supplier pricing not found' },
+                { status: 404 }
+            )
+        }
+
+        // Archive old pricing by setting effective_to
+        supplierPricing[index].effective_to = new Date().toISOString().split('T')[0]
+
+        // Get supplier and product info
+        const supplier = suppliers.find(s => s.supplier_id === Number(supplierId))
+        const product = products.find(p => p.product_id === Number(productId))
+
+        if (!supplier || !product) {
+            return HttpResponse.json(
+                { message: 'Supplier or product not found' },
+                { status: 404 }
+            )
+        }
+
+        // Create new pricing entry
+        const newPricing: SupplierPricing = {
+            supplier_pricing_id: Math.max(...supplierPricing.map(p => p.supplier_pricing_id || 0)) + 1,
+            supplier_id: Number(supplierId),
+            supplier_name: supplier.name,
+            product_id: Number(productId),
+            sku: product.sku,
+            product_name: product.name,
+            product_type: product.product_type,
+            price: update.price,
+            daily_hire_rate: update.daily_hire_rate,
+            effective_from: update.effective_from || new Date().toISOString().split('T')[0]
+        }
+
+        supplierPricing.push(newPricing)
+        return HttpResponse.json(newPricing)
+    }),
+
+    // Bulk update supplier pricing
+    http.post('/api/supplier-pricing/bulk', async ({ request }) => {
+        await delay(600)
+        const { updates } = await request.json() as BulkSupplierPricingUpdateRequest
+
+        const today = new Date().toISOString().split('T')[0]
+        const results: SupplierPricing[] = []
+        const errors: string[] = []
+
+        for (const update of updates) {
+            // Find the current active pricing (one without effective_to date)
+            const index = supplierPricing.findIndex(
+                p => p.supplier_id === update.supplier_id &&
+                     p.product_id === update.product_id &&
+                     !p.effective_to
+            )
+
+            const supplier = suppliers.find(s => s.supplier_id === update.supplier_id)
+            const product = products.find(p => p.product_id === update.product_id)
+
+            if (!supplier || !product) {
+                errors.push(`Supplier ID ${update.supplier_id} or Product ID ${update.product_id} not found`)
+                continue
+            }
+
+            // If active pricing exists, archive it
+            if (index !== -1) {
+                supplierPricing[index].effective_to = today
+            }
+
+            // Create new pricing entry
+            const newPricing: SupplierPricing = {
+                supplier_pricing_id: Math.max(...supplierPricing.map(p => p.supplier_pricing_id || 0)) + 1,
+                supplier_id: update.supplier_id,
+                supplier_name: supplier.name,
+                product_id: update.product_id,
+                sku: product.sku,
+                product_name: product.name,
+                product_type: product.product_type,
+                price: update.price,
+                daily_hire_rate: update.daily_hire_rate,
+                effective_from: update.effective_from || today
+            }
+
+            supplierPricing.push(newPricing)
+            results.push(newPricing)
+        }
+
+        return HttpResponse.json({
+            success: results.length,
+            failed: errors.length,
+            results,
+            errors
+        })
     }),
 ]
