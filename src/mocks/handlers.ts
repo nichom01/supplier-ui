@@ -5,7 +5,8 @@ import { mockSalesOrders, mockSalesOrderLines } from './data/salesOrders'
 import { mockMonthlyChartData, mockDailyChartData, mockRadarChartData, mockPieChartData } from './data/charts'
 import { mockAssets, mockAssetAvailability } from './data/assets'
 import { mockUsers, mockPasswords } from './data/users'
-import { Product, Customer, SalesOrder, SalesOrderLine, BasketItem, User, AuthCredentials, SignUpData } from '@/types'
+import { mockPricing } from './data/pricing'
+import { Product, Customer, SalesOrder, SalesOrderLine, BasketItem, User, AuthCredentials, SignUpData, DefaultPricing, PricingUpdateRequest, BulkPricingUpdateRequest } from '@/types'
 
 // In-memory storage for products (simulates a database)
 let products = [...mockProducts]
@@ -27,6 +28,9 @@ let assetAvailability = [...mockAssetAvailability]
 // In-memory storage for users
 let users = [...mockUsers]
 const passwords = { ...mockPasswords }
+
+// In-memory storage for pricing
+let pricing = [...mockPricing]
 
 // In-memory session storage (token -> user_id)
 const sessions: Record<string, number> = {}
@@ -628,5 +632,128 @@ export const handlers = [
         }
 
         return HttpResponse.json(asset)
+    }),
+
+    // Pricing endpoints
+    // Get all pricing
+    http.get('/api/pricing', async () => {
+        await delay(300)
+        return HttpResponse.json({ pricing })
+    }),
+
+    // Get pricing for a specific product
+    http.get('/api/pricing/:productId', async ({ params }) => {
+        await delay(200)
+        const { productId } = params
+        const productPricing = pricing.find(p => p.product_id === Number(productId))
+
+        if (!productPricing) {
+            return new HttpResponse(null, { status: 404 })
+        }
+
+        return HttpResponse.json(productPricing)
+    }),
+
+    // Update a single pricing record
+    http.put('/api/pricing/:productId', async ({ request, params }) => {
+        await delay(400)
+        const { productId } = params
+        const update = await request.json() as PricingUpdateRequest
+
+        const index = pricing.findIndex(p => p.product_id === Number(productId))
+        if (index === -1) {
+            return HttpResponse.json(
+                { message: 'Pricing not found' },
+                { status: 404 }
+            )
+        }
+
+        // Archive old pricing by setting effective_to
+        pricing[index].effective_to = new Date().toISOString().split('T')[0]
+
+        // Create new pricing entry
+        const product = products.find(p => p.product_id === Number(productId))
+        if (!product) {
+            return HttpResponse.json(
+                { message: 'Product not found' },
+                { status: 404 }
+            )
+        }
+
+        const newPricing: DefaultPricing = {
+            pricing_id: Math.max(...pricing.map(p => p.pricing_id || 0)) + 1,
+            product_id: Number(productId),
+            sku: product.sku,
+            product_name: product.name,
+            product_type: product.product_type,
+            price: update.price,
+            daily_hire_rate: update.daily_hire_rate,
+            effective_from: update.effective_from || new Date().toISOString().split('T')[0]
+        }
+
+        pricing.push(newPricing)
+
+        // Also update the product's price
+        if (update.price !== undefined) {
+            product.price = update.price
+        }
+        if (update.daily_hire_rate !== undefined) {
+            product.daily_hire_rate = update.daily_hire_rate
+        }
+
+        return HttpResponse.json(newPricing)
+    }),
+
+    // Bulk update pricing
+    http.post('/api/pricing/bulk', async ({ request }) => {
+        await delay(600)
+        const { updates } = await request.json() as BulkPricingUpdateRequest
+
+        const today = new Date().toISOString().split('T')[0]
+        const results: DefaultPricing[] = []
+        const errors: string[] = []
+
+        for (const update of updates) {
+            const index = pricing.findIndex(p => p.product_id === update.product_id)
+            const product = products.find(p => p.product_id === update.product_id)
+
+            if (index === -1 || !product) {
+                errors.push(`Product ID ${update.product_id} not found`)
+                continue
+            }
+
+            // Archive old pricing
+            pricing[index].effective_to = today
+
+            // Create new pricing entry
+            const newPricing: DefaultPricing = {
+                pricing_id: Math.max(...pricing.map(p => p.pricing_id || 0)) + 1,
+                product_id: update.product_id,
+                sku: product.sku,
+                product_name: product.name,
+                product_type: product.product_type,
+                price: update.price,
+                daily_hire_rate: update.daily_hire_rate,
+                effective_from: update.effective_from || today
+            }
+
+            pricing.push(newPricing)
+            results.push(newPricing)
+
+            // Update product pricing
+            if (update.price !== undefined) {
+                product.price = update.price
+            }
+            if (update.daily_hire_rate !== undefined) {
+                product.daily_hire_rate = update.daily_hire_rate
+            }
+        }
+
+        return HttpResponse.json({
+            success: results.length,
+            failed: errors.length,
+            results,
+            errors
+        })
     }),
 ]

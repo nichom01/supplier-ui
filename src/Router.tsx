@@ -6,10 +6,11 @@ import Dashboard from './pages/Dashboard'
 import Sample from './pages/Sample'
 import ProductMaintenance from './pages/ProductMaintenance'
 import CustomerMaintenance from './pages/CustomerMaintenance'
+import PricingMaintenance from './pages/PricingMaintenance'
 import ComingSoon from './pages/ComingSoon'
 import Chart from './pages/Chart'
 import SignIn from './pages/SignIn'
-import SignUp from './pages/SignUp'
+import Signup from './pages/Signup'
 import Products from './pages/Products'
 import ProductDetail from './pages/ProductDetail'
 import HireProductDetail from './pages/HireProductDetail'
@@ -23,7 +24,7 @@ export default function Router() {
         <Routes>
             {/* Public routes - no authentication required */}
             <Route path="signin" element={<SignIn />} />
-            <Route path="signup" element={<SignUp />} />
+            <Route path="signup" element={<Signup />} />
 
             {/* Protected routes - all require authentication with role-based access */}
             <Route element={<AppLayout />}>
@@ -84,6 +85,11 @@ export default function Router() {
                     <Route path="customer-maintenance" element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <CustomerMaintenance />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="pricing-maintenance" element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                            <PricingMaintenance />
                         </ProtectedRoute>
                     } />
                     <Route path="feature" element={
