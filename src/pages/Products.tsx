@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Product } from '@/types'
 import { productsApi } from '@/services/api'
-import { useCart } from '@/contexts/CartContext'
+import { useBasket } from '@/contexts/BasketContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 
 export default function Products() {
     const navigate = useNavigate()
-    const { addToCart } = useCart()
+    const { addToBasket } = useBasket()
     const [products, setProducts] = useState<Product[]>([])
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
     const [searchTerm, setSearchTerm] = useState('')
@@ -62,22 +62,26 @@ export default function Products() {
 
     const categories = ['all', ...Array.from(new Set(products.map(p => p.category)))]
 
-    const handleAddToCart = async (productId: number, productName: string) => {
+    const handleAddToBasket = async (productId: number, productName: string) => {
         try {
-            await addToCart(productId, 1)
-            toast.success('Added to cart', {
-                description: `${productName} has been added to your cart`
+            await addToBasket(productId, 1)
+            toast.success('Added to basket', {
+                description: `${productName} has been added to your basket`
             })
         } catch (err) {
-            console.error('Failed to add to cart:', err)
-            toast.error('Failed to add to cart', {
+            console.error('Failed to add to basket:', err)
+            toast.error('Failed to add to basket', {
                 description: 'Please try again'
             })
         }
     }
 
-    const handleViewProduct = (productId: number) => {
-        navigate(`/products/${productId}`)
+    const handleViewProduct = (product: Product) => {
+        if (product.product_type === 'hire') {
+            navigate(`/hire-products/${product.product_id}`)
+        } else {
+            navigate(`/products/${product.product_id}`)
+        }
     }
 
     if (isLoading) {
@@ -148,24 +152,41 @@ export default function Products() {
                             </div>
                         </CardContent>
                         <CardFooter className="flex justify-between items-center border-t pt-4">
-                            <span className="text-2xl font-bold">
-                                ${product.price?.toFixed(2) || '0.00'}
-                            </span>
+                            <div className="flex flex-col">
+                                <span className="text-2xl font-bold">
+                                    ${product.product_type === 'hire'
+                                        ? product.daily_hire_rate?.toFixed(2)
+                                        : product.price?.toFixed(2) || '0.00'}
+                                </span>
+                                {product.product_type === 'hire' && (
+                                    <span className="text-xs text-muted-foreground">per day</span>
+                                )}
+                            </div>
                             <div className="flex gap-2">
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => handleViewProduct(product.product_id!)}
+                                    onClick={() => handleViewProduct(product)}
                                 >
                                     View Details
                                 </Button>
-                                <Button
-                                    size="sm"
-                                    onClick={() => handleAddToCart(product.product_id!, product.name)}
-                                >
-                                    <ShoppingCart className="h-4 w-4 mr-1" />
-                                    Add to Cart
-                                </Button>
+                                {product.product_type === 'sale' && (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleAddToBasket(product.product_id!, product.name)}
+                                    >
+                                        <ShoppingCart className="h-4 w-4 mr-1" />
+                                        Add to Basket
+                                    </Button>
+                                )}
+                                {product.product_type === 'hire' && (
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleViewProduct(product)}
+                                    >
+                                        Book Now
+                                    </Button>
+                                )}
                             </div>
                         </CardFooter>
                     </Card>

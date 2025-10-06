@@ -109,7 +109,7 @@ export default function Orders() {
                                         <div>
                                             <p className="text-sm font-medium">Total Amount</p>
                                             <p className="text-lg font-semibold">
-                                                ${order.total_amount.toFixed(2)}
+                                                £{order.total_amount.toFixed(2)}
                                             </p>
                                         </div>
                                     </div>

@@ -3,7 +3,9 @@ import { mockProducts } from './data/products'
 import { mockCustomers } from './data/customers'
 import { mockSalesOrders, mockSalesOrderLines } from './data/salesOrders'
 import { mockMonthlyChartData, mockDailyChartData, mockRadarChartData, mockPieChartData } from './data/charts'
-import { Product, Customer, SalesOrder, SalesOrderLine, CartItem } from '@/types'
+import { mockAssets, mockAssetAvailability } from './data/assets'
+import { mockUsers, mockPasswords } from './data/users'
+import { Product, Customer, SalesOrder, SalesOrderLine, BasketItem, User, AuthCredentials, SignUpData } from '@/types'
 
 // In-memory storage for products (simulates a database)
 let products = [...mockProducts]
@@ -15,10 +17,112 @@ let customers = [...mockCustomers]
 let salesOrders = [...mockSalesOrders]
 let salesOrderLines = [...mockSalesOrderLines]
 
-// In-memory storage for shopping cart (session-based, would typically use cookies/sessions)
-let cart: CartItem[] = []
+// In-memory storage for shopping basket (session-based, would typically use cookies/sessions)
+let basket: BasketItem[] = []
+
+// In-memory storage for assets
+let assets = [...mockAssets]
+let assetAvailability = [...mockAssetAvailability]
+
+// In-memory storage for users
+let users = [...mockUsers]
+const passwords = { ...mockPasswords }
+
+// In-memory session storage (token -> user_id)
+const sessions: Record<string, number> = {}
+
+// Helper to generate simple token
+function generateToken(userId: number): string {
+    const token = `token_${userId}_${Date.now()}_${Math.random().toString(36).substring(7)}`
+    sessions[token] = userId
+    return token
+}
+
+// Helper to validate token
+function validateToken(token: string | null): User | null {
+    if (!token) return null
+    const userId = sessions[token]
+    if (!userId) return null
+    return users.find(u => u.user_id === userId) || null
+}
 
 export const handlers = [
+    // Authentication endpoints
+    // Sign in
+    http.post('/api/auth/signin', async ({ request }) => {
+        await delay(500)
+        const { email, password } = await request.json() as AuthCredentials
+
+        const user = users.find(u => u.email === email)
+        if (!user || passwords[email] !== password) {
+            return HttpResponse.json(
+                { message: 'Invalid email or password' },
+                { status: 401 }
+            )
+        }
+
+        const token = generateToken(user.user_id)
+        return HttpResponse.json({ user, token })
+    }),
+
+    // Sign up
+    http.post('/api/auth/signup', async ({ request }) => {
+        await delay(600)
+        const { email, password, name } = await request.json() as SignUpData
+
+        // Check if user already exists
+        if (users.find(u => u.email === email)) {
+            return HttpResponse.json(
+                { message: 'Email already registered' },
+                { status: 409 }
+            )
+        }
+
+        // Create new user with 'user' role by default
+        const newUser: User = {
+            user_id: Math.max(...users.map(u => u.user_id)) + 1,
+            email,
+            name,
+            role: 'user'
+        }
+
+        users.push(newUser)
+        passwords[email] = password
+
+        const token = generateToken(newUser.user_id)
+        return HttpResponse.json({ user: newUser, token }, { status: 201 })
+    }),
+
+    // Sign out
+    http.post('/api/auth/signout', async ({ request }) => {
+        await delay(200)
+        const authHeader = request.headers.get('Authorization')
+        const token = authHeader?.replace('Bearer ', '')
+
+        if (token && sessions[token]) {
+            delete sessions[token]
+        }
+
+        return new HttpResponse(null, { status: 204 })
+    }),
+
+    // Get current user (verify token)
+    http.get('/api/auth/me', async ({ request }) => {
+        await delay(300)
+        const authHeader = request.headers.get('Authorization')
+        const token = authHeader?.replace('Bearer ', '') || null
+
+        const user = validateToken(token)
+        if (!user) {
+            return HttpResponse.json(
+                { message: 'Unauthorized' },
+                { status: 401 }
+            )
+        }
+
+        return HttpResponse.json({ user })
+    }),
+
     // Get all products
     http.get('/api/products', async () => {
         await delay(300) // Simulate network delay
@@ -158,79 +262,171 @@ export const handlers = [
         return new HttpResponse(null, { status: 204 })
     }),
 
-    // Shopping Cart endpoints
-    // Get cart
-    http.get('/api/cart', async () => {
+    // Shopping Basket endpoints
+    // Get basket
+    http.get('/api/basket', async () => {
         await delay(200)
-        const total = cart.reduce((sum, item) => sum + (item.product.price || 0) * item.quantity, 0)
-        return HttpResponse.json({ items: cart, total })
+        const total = basket.reduce((sum, item) => {
+            if (item.product.product_type === 'hire') {
+                return sum + (item.product.daily_hire_rate || 0) * item.quantity
+            } else {
+                return sum + (item.product.price || 0) * item.quantity
+            }
+        }, 0)
+        return HttpResponse.json({ items: basket, total })
     }),
 
-    // Add to cart
-    http.post('/api/cart', async ({ request }) => {
+    // Add to basket
+    http.post('/api/basket', async ({ request }) => {
         await delay(300)
-        const { product_id, quantity } = await request.json() as { product_id: number, quantity: number }
+        const {
+            product_id,
+            quantity,
+            hire_start_date,
+            hire_end_date,
+            asset_id
+        } = await request.json() as {
+            product_id: number
+            quantity: number
+            hire_start_date?: string
+            hire_end_date?: string
+            asset_id?: number
+        }
 
         const product = products.find(p => p.product_id === product_id)
         if (!product) {
             return new HttpResponse(null, { status: 404 })
         }
 
-        const existingItem = cart.find(item => item.product.product_id === product_id)
+        // For hire products, prevent double-booking the same asset
+        if (product.product_type === 'hire' && asset_id && hire_start_date && hire_end_date) {
+            const conflictingItem = basket.find(item => {
+                if (item.asset_id !== asset_id) return false
+                if (!item.hire_start_date || !item.hire_end_date) return false
 
-        if (existingItem) {
-            existingItem.quantity += quantity
-        } else {
-            cart.push({ product, quantity })
+                // Check for date overlap
+                const existingStart = new Date(item.hire_start_date)
+                const existingEnd = new Date(item.hire_end_date)
+                const newStart = new Date(hire_start_date)
+                const newEnd = new Date(hire_end_date)
+
+                // Dates overlap if: start is before existing end AND end is after existing start
+                return newStart <= existingEnd && newEnd >= existingStart
+            })
+
+            if (conflictingItem) {
+                return HttpResponse.json(
+                    { error: 'This asset is already booked for overlapping dates in your basket' },
+                    { status: 409 }
+                )
+            }
+
+            // Also update the mock availability to mark these dates as unavailable
+            const start = new Date(hire_start_date)
+            const end = new Date(hire_end_date)
+            const currentDate = new Date(start)
+
+            while (currentDate <= end) {
+                const dateStr = currentDate.toISOString().split('T')[0]
+                // Add to availability list as unavailable (but without sales_order_id yet)
+                if (!assetAvailability.find(av => av.asset_id === asset_id && av.date === dateStr)) {
+                    assetAvailability.push({
+                        asset_id,
+                        date: dateStr,
+                        is_available: false
+                    })
+                }
+                currentDate.setDate(currentDate.getDate() + 1)
+            }
         }
 
-        const total = cart.reduce((sum, item) => sum + (item.product.price || 0) * item.quantity, 0)
-        return HttpResponse.json({ items: cart, total })
+        // For sale products, check if already in basket
+        const existingItem = basket.find(item =>
+            item.product.product_id === product_id &&
+            product.product_type === 'sale'
+        )
+
+        if (existingItem && product.product_type === 'sale') {
+            // For sale products, increase quantity
+            existingItem.quantity += quantity
+        } else {
+            // For hire products or new items, add new basket item
+            basket.push({
+                product,
+                quantity,
+                hire_start_date,
+                hire_end_date,
+                asset_id
+            })
+        }
+
+        // Calculate total (considering both sale and hire products)
+        const total = basket.reduce((sum, item) => {
+            if (item.product.product_type === 'hire') {
+                return sum + (item.product.daily_hire_rate || 0) * item.quantity
+            } else {
+                return sum + (item.product.price || 0) * item.quantity
+            }
+        }, 0)
+
+        return HttpResponse.json({ items: basket, total })
     }),
 
-    // Update cart item
-    http.put('/api/cart/:productId', async ({ params, request }) => {
+    // Update basket item
+    http.put('/api/basket/:productId', async ({ params, request }) => {
         await delay(300)
         const { productId } = params
         const { quantity } = await request.json() as { quantity: number }
 
-        const itemIndex = cart.findIndex(item => item.product.product_id === Number(productId))
+        const itemIndex = basket.findIndex(item => item.product.product_id === Number(productId))
 
         if (itemIndex === -1) {
             return new HttpResponse(null, { status: 404 })
         }
 
         if (quantity <= 0) {
-            cart.splice(itemIndex, 1)
+            basket.splice(itemIndex, 1)
         } else {
-            cart[itemIndex].quantity = quantity
+            basket[itemIndex].quantity = quantity
         }
 
-        const total = cart.reduce((sum, item) => sum + (item.product.price || 0) * item.quantity, 0)
-        return HttpResponse.json({ items: cart, total })
+        const total = basket.reduce((sum, item) => {
+            if (item.product.product_type === 'hire') {
+                return sum + (item.product.daily_hire_rate || 0) * item.quantity
+            } else {
+                return sum + (item.product.price || 0) * item.quantity
+            }
+        }, 0)
+        return HttpResponse.json({ items: basket, total })
     }),
 
-    // Remove from cart
-    http.delete('/api/cart/:productId', async ({ params }) => {
+    // Remove from basket
+    http.delete('/api/basket/:productId', async ({ params }) => {
         await delay(300)
         const { productId } = params
 
-        const itemIndex = cart.findIndex(item => item.product.product_id === Number(productId))
+        const itemIndex = basket.findIndex(item => item.product.product_id === Number(productId))
 
         if (itemIndex === -1) {
             return new HttpResponse(null, { status: 404 })
         }
 
-        cart.splice(itemIndex, 1)
+        basket.splice(itemIndex, 1)
 
-        const total = cart.reduce((sum, item) => sum + (item.product.price || 0) * item.quantity, 0)
-        return HttpResponse.json({ items: cart, total })
+        const total = basket.reduce((sum, item) => {
+            if (item.product.product_type === 'hire') {
+                return sum + (item.product.daily_hire_rate || 0) * item.quantity
+            } else {
+                return sum + (item.product.price || 0) * item.quantity
+            }
+        }, 0)
+        return HttpResponse.json({ items: basket, total })
     }),
 
-    // Clear cart
-    http.delete('/api/cart', async () => {
+    // Clear basket
+    http.delete('/api/basket', async () => {
         await delay(200)
-        cart = []
+        basket = []
         return HttpResponse.json({ items: [], total: 0 })
     }),
 
@@ -255,7 +451,7 @@ export const handlers = [
         return HttpResponse.json({ ...order, lines })
     }),
 
-    // Create sales order from cart
+    // Create sales order from basket
     http.post('/api/sales-orders', async ({ request }) => {
         await delay(500)
         const { customer_id, requested_delivery_date, payment_terms, shipping_method, warehouse_id } =
@@ -267,13 +463,21 @@ export const handlers = [
                 warehouse_id: number
             }
 
-        if (cart.length === 0) {
-            return HttpResponse.json({ error: 'Cart is empty' }, { status: 400 })
+        if (basket.length === 0) {
+            return HttpResponse.json({ error: 'Basket is empty' }, { status: 400 })
         }
 
         // Create order
         const newOrderId = Math.max(0, ...salesOrders.map(o => o.sales_order_id || 0)) + 1
-        const total = cart.reduce((sum, item) => sum + (item.product.price || 0) * item.quantity, 0)
+
+        // Calculate total considering both sale and hire products
+        const total = basket.reduce((sum, item) => {
+            if (item.product.product_type === 'hire') {
+                return sum + (item.product.daily_hire_rate || 0) * item.quantity
+            } else {
+                return sum + (item.product.price || 0) * item.quantity
+            }
+        }, 0)
 
         const newOrder: SalesOrder = {
             sales_order_id: newOrderId,
@@ -290,21 +494,27 @@ export const handlers = [
         salesOrders.push(newOrder)
 
         // Create order lines
-        const newLines: SalesOrderLine[] = cart.map((item, index) => ({
+        const newLines: SalesOrderLine[] = basket.map((item, index) => ({
             line_id: Math.max(0, ...salesOrderLines.map(l => l.line_id || 0)) + index + 1,
             sales_order_id: newOrderId,
             product_id: item.product.product_id!,
             quantity_ordered: item.quantity,
             quantity_allocated: 0,
             quantity_shipped: 0,
-            unit_price: item.product.price || 0,
-            status: 'pending'
+            unit_price: item.product.product_type === 'hire'
+                ? (item.product.daily_hire_rate || 0)
+                : (item.product.price || 0),
+            status: 'pending',
+            line_type: item.product.product_type,
+            asset_id: item.asset_id,
+            hire_start_date: item.hire_start_date,
+            hire_end_date: item.hire_end_date
         }))
 
         salesOrderLines.push(...newLines)
 
-        // Clear cart
-        cart = []
+        // Clear basket
+        basket = []
 
         return HttpResponse.json({ ...newOrder, lines: newLines }, { status: 201 })
     }),
@@ -323,5 +533,100 @@ export const handlers = [
 
         salesOrders[index] = { ...salesOrders[index], ...updates }
         return HttpResponse.json(salesOrders[index])
+    }),
+
+    // Asset endpoints
+    // IMPORTANT: More specific routes must come before parameterized routes
+
+    // Check availability for a product between dates
+    http.get('/api/assets/availability', async ({ request }) => {
+        await delay(300)
+        const url = new URL(request.url)
+        const productId = Number(url.searchParams.get('product_id'))
+        const startDate = url.searchParams.get('start_date')
+        const endDate = url.searchParams.get('end_date')
+
+        if (!productId || !startDate || !endDate) {
+            return HttpResponse.json({ error: 'Missing required parameters' }, { status: 400 })
+        }
+
+        // Get all assets for the product
+        const productAssets = assets.filter(a => a.product_id === productId)
+
+        // Filter to available assets (check if any date in range is unavailable)
+        const availableAssets = productAssets.filter(asset => {
+            // Check if asset is generally available
+            if (asset.status !== 'available') {
+                return false
+            }
+
+            // Check availability calendar for date range
+            const start = new Date(startDate)
+            const end = new Date(endDate)
+
+            for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+                const dateStr = date.toISOString().split('T')[0]
+                const unavailable = assetAvailability.find(
+                    av => av.asset_id === asset.asset_id && av.date === dateStr && !av.is_available
+                )
+                if (unavailable) {
+                    return false
+                }
+            }
+
+            return true
+        })
+
+        return HttpResponse.json({ available_assets: availableAssets })
+    }),
+
+    // Get availability calendar for a specific asset
+    http.get('/api/assets/:id/availability', async ({ params, request }) => {
+        await delay(200)
+        const { id } = params
+        const url = new URL(request.url)
+        const startDate = url.searchParams.get('start_date')
+        const endDate = url.searchParams.get('end_date')
+
+        const asset = assets.find(a => a.asset_id === Number(id))
+        if (!asset) {
+            return new HttpResponse(null, { status: 404 })
+        }
+
+        // Filter availability data for this asset and date range
+        let availability = assetAvailability.filter(av => av.asset_id === Number(id))
+
+        if (startDate && endDate) {
+            availability = availability.filter(av => av.date >= startDate && av.date <= endDate)
+        }
+
+        return HttpResponse.json({ availability })
+    }),
+
+    // Get all assets for a product
+    http.get('/api/assets', async ({ request }) => {
+        await delay(200)
+        const url = new URL(request.url)
+        const productId = url.searchParams.get('product_id')
+
+        if (productId) {
+            const filteredAssets = assets.filter(a => a.product_id === Number(productId))
+            return HttpResponse.json({ assets: filteredAssets })
+        }
+
+        return HttpResponse.json({ assets })
+    }),
+
+    // Get single asset (MUST be last among asset routes)
+    http.get('/api/assets/:id', async ({ params }) => {
+        await delay(200)
+        const { id } = params
+        const asset = assets.find(a => a.asset_id === Number(id))
+
+        if (!asset) {
+            return new HttpResponse(null, { status: 404 })
+        }
+
+        return HttpResponse.json(asset)
     }),
 ]

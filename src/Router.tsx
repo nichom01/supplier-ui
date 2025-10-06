@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { AppLayout } from './components/app-layout'
+import { ProtectedRoute } from './components/ProtectedRoute'
 import NotMatch from './pages/NotMatch'
 import Dashboard from './pages/Dashboard'
 import Sample from './pages/Sample'
@@ -7,11 +8,12 @@ import ProductMaintenance from './pages/ProductMaintenance'
 import CustomerMaintenance from './pages/CustomerMaintenance'
 import ComingSoon from './pages/ComingSoon'
 import Chart from './pages/Chart'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
+import SignIn from './pages/SignIn'
+import SignUp from './pages/SignUp'
 import Products from './pages/Products'
 import ProductDetail from './pages/ProductDetail'
-import Cart from './pages/Cart'
+import HireProductDetail from './pages/HireProductDetail'
+import Basket from './pages/Basket'
 import Checkout from './pages/Checkout'
 import Orders from './pages/Orders'
 import OrderConfirmation from './pages/OrderConfirmation'
@@ -19,23 +21,83 @@ import OrderConfirmation from './pages/OrderConfirmation'
 export default function Router() {
     return (
         <Routes>
+            {/* Public routes - no authentication required */}
+            <Route path="signin" element={<SignIn />} />
+            <Route path="signup" element={<SignUp />} />
+
+            {/* Protected routes - all require authentication with role-based access */}
             <Route element={<AppLayout />}>
-                <Route path="" element={<Dashboard />} />
-                <Route path="products" element={<Products />} />
-                <Route path="products/:id" element={<ProductDetail />} />
-                <Route path="cart" element={<Cart />} />
-                <Route path="checkout" element={<Checkout />} />
-                <Route path="orders" element={<Orders />} />
-                <Route path="orders/:id" element={<OrderConfirmation />} />
+                {/* User routes - accessible by user, employee, admin */}
+                <Route path="" element={
+                    <ProtectedRoute allowedRoles={['user', 'employee', 'admin']}>
+                        <Dashboard />
+                    </ProtectedRoute>
+                } />
+                <Route path="products" element={
+                    <ProtectedRoute allowedRoles={['user', 'employee', 'admin']}>
+                        <Products />
+                    </ProtectedRoute>
+                } />
+                <Route path="products/:id" element={
+                    <ProtectedRoute allowedRoles={['user', 'employee', 'admin']}>
+                        <ProductDetail />
+                    </ProtectedRoute>
+                } />
+                <Route path="hire-products/:id" element={
+                    <ProtectedRoute allowedRoles={['user', 'employee', 'admin']}>
+                        <HireProductDetail />
+                    </ProtectedRoute>
+                } />
+                <Route path="basket" element={
+                    <ProtectedRoute allowedRoles={['user', 'employee', 'admin']}>
+                        <Basket />
+                    </ProtectedRoute>
+                } />
+                <Route path="checkout" element={
+                    <ProtectedRoute allowedRoles={['user', 'employee', 'admin']}>
+                        <Checkout />
+                    </ProtectedRoute>
+                } />
+                <Route path="orders" element={
+                    <ProtectedRoute allowedRoles={['user', 'employee', 'admin']}>
+                        <Orders />
+                    </ProtectedRoute>
+                } />
+                <Route path="orders/:id" element={
+                    <ProtectedRoute allowedRoles={['user', 'employee', 'admin']}>
+                        <OrderConfirmation />
+                    </ProtectedRoute>
+                } />
+
+                {/* Admin and Employee routes */}
                 <Route path="pages">
-                    <Route path="sample" element={<Sample />} />
-                    <Route path="product-maintenance" element={<ProductMaintenance />} />
-                    <Route path="customer-maintenance" element={<CustomerMaintenance />} />
-                    <Route path="feature" element={<ComingSoon />} />
-                    <Route path="chart" element={<Chart />} />
-                    <Route path="login" element={<Login />} />
-                    <Route path="signup" element={<Signup />} />
+                    <Route path="sample" element={
+                        <ProtectedRoute allowedRoles={['employee', 'admin']}>
+                            <Sample />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="product-maintenance" element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                            <ProductMaintenance />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="customer-maintenance" element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                            <CustomerMaintenance />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="feature" element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                            <ComingSoon />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="chart" element={
+                        <ProtectedRoute allowedRoles={['employee', 'admin']}>
+                            <Chart />
+                        </ProtectedRoute>
+                    } />
                 </Route>
+
                 <Route path="*" element={<NotMatch />} />
             </Route>
         </Routes>

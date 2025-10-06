@@ -10,7 +10,8 @@ export const mockProducts: Product[] = [
         volume: 0.5,
         category: "Electronics",
         unit_of_measure: "piece",
-        price: 29.99
+        price: 29.99,
+        product_type: "sale"
     },
     {
         product_id: 2,
@@ -21,7 +22,8 @@ export const mockProducts: Product[] = [
         volume: 2.3,
         category: "Furniture",
         unit_of_measure: "piece",
-        price: 249.99
+        price: 249.99,
+        product_type: "sale"
     },
     {
         product_id: 3,
@@ -32,7 +34,8 @@ export const mockProducts: Product[] = [
         volume: 0.1,
         category: "Clothing",
         unit_of_measure: "piece",
-        price: 19.99
+        price: 19.99,
+        product_type: "sale"
     },
     {
         product_id: 4,
@@ -43,7 +46,8 @@ export const mockProducts: Product[] = [
         volume: 1.5,
         category: "Electronics",
         unit_of_measure: "piece",
-        price: 89.99
+        price: 89.99,
+        product_type: "sale"
     },
     {
         product_id: 5,
@@ -54,7 +58,8 @@ export const mockProducts: Product[] = [
         volume: 8.5,
         category: "Furniture",
         unit_of_measure: "piece",
-        price: 499.99
+        price: 499.99,
+        product_type: "sale"
     },
     {
         product_id: 6,
@@ -65,6 +70,44 @@ export const mockProducts: Product[] = [
         volume: 0.2,
         category: "Electronics",
         unit_of_measure: "piece",
-        price: 39.99
+        price: 39.99,
+        product_type: "sale"
+    },
+    // Hire products
+    {
+        product_id: 7,
+        sku: "PROJ-001",
+        name: "Professional Projector",
+        description: "4K professional projector with 5000 lumens, ideal for conferences and events",
+        weight: 8.5,
+        volume: 0.8,
+        category: "Electronics",
+        unit_of_measure: "piece",
+        daily_hire_rate: 75.00,
+        product_type: "hire"
+    },
+    {
+        product_id: 8,
+        sku: "CAM-001",
+        name: "DSLR Camera Kit",
+        description: "Professional DSLR camera with lenses and accessories",
+        weight: 3.2,
+        volume: 0.4,
+        category: "Electronics",
+        unit_of_measure: "piece",
+        daily_hire_rate: 120.00,
+        product_type: "hire"
+    },
+    {
+        product_id: 9,
+        sku: "EVENT-001",
+        name: "Event Tent 6x6m",
+        description: "Large waterproof event tent with sides and flooring",
+        weight: 85.0,
+        volume: 4.5,
+        category: "Event Equipment",
+        unit_of_measure: "piece",
+        daily_hire_rate: 200.00,
+        product_type: "hire"
     }
 ]

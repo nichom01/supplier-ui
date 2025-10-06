@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { Link, NavLink, useLocation } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { mainMenu } from '@/config/menu'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/contexts/ThemeContext'
-import { useCart } from '@/contexts/CartContext'
+import { useBasket } from '@/contexts/BasketContext'
+import { useAuth } from '@/contexts/AuthContext'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -33,15 +34,33 @@ import GitHub from './icons/github'
 
 export function AppHeader() {
     const location = useLocation()
+    const navigate = useNavigate()
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
     const { theme, setTheme, primaryColor, setPrimaryColor } = useTheme()
-    const { cart } = useCart()
+    const { basket } = useBasket()
+    const { user, signOut } = useAuth()
 
     const isDarkMode = theme === "dark"
-    const cartItemCount = cart.items.reduce((sum, item) => sum + item.quantity, 0)
+    const cartItemCount = basket.items.reduce((sum, item) => sum + item.quantity, 0)
 
     const toggleDarkMode = (checked: boolean) => {
         setTheme(checked ? "dark" : "light")
+    }
+
+    const handleSignOut = async () => {
+        await signOut()
+        navigate('/signin')
+    }
+
+    // Get user initials for avatar
+    const getUserInitials = () => {
+        if (!user?.name) return 'U'
+        return user.name
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2)
     }
 
     return (
@@ -106,7 +125,7 @@ export function AppHeader() {
                         </nav>
                     </div>
                     <nav className="flex gap-1">
-                        <Link to="/cart">
+                        <Link to="/basket">
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -212,32 +231,37 @@ export function AppHeader() {
                             <GitHub />
                             <span className="sr-only">GitHub</span>
                         </a>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    variant='ghost'
-                                    className='relative h-8 w-8 rounded-full cursor-pointer ml-2'>
-                                    <Avatar className='h-8 w-8'>
-                                        <AvatarImage src={baseUrl + '/avatars/shadcn.jpg'} alt='shadcn' />
-                                        <AvatarFallback className="rounded-lg">SC</AvatarFallback>
-                                    </Avatar>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className='w-56' align='end' forceMount>
-                                <DropdownMenuLabel className='font-normal'>
-                                    <div className='flex flex-col space-y-1'>
-                                        <p className='text-sm font-medium leading-none'>shadcn</p>
-                                        <p className='text-xs leading-none text-muted-foreground'>
-                                            m@example.com
-                                        </p>
-                                    </div>
-                                </DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild>
-                                    <Link to="/pages/login">Log out</Link>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                        {user && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant='ghost'
+                                        className='relative h-8 w-8 rounded-full cursor-pointer ml-2'>
+                                        <Avatar className='h-8 w-8'>
+                                            <AvatarImage src={baseUrl + '/avatars/shadcn.jpg'} alt={user.name} />
+                                            <AvatarFallback className="rounded-lg">{getUserInitials()}</AvatarFallback>
+                                        </Avatar>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className='w-56' align='end' forceMount>
+                                    <DropdownMenuLabel className='font-normal'>
+                                        <div className='flex flex-col space-y-1'>
+                                            <p className='text-sm font-medium leading-none'>{user.name}</p>
+                                            <p className='text-xs leading-none text-muted-foreground'>
+                                                {user.email}
+                                            </p>
+                                            <p className='text-xs leading-none text-muted-foreground capitalize mt-1'>
+                                                Role: {user.role}
+                                            </p>
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={handleSignOut}>
+                                        Sign Out
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </nav>
                 </div>
             </div>

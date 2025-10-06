@@ -7,37 +7,24 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
-export default function SignUp() {
+export default function SignIn() {
     const navigate = useNavigate()
-    const { signUp } = useAuth()
-    const [name, setName] = useState('')
+    const { signIn } = useAuth()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [confirmPassword, setConfirmPassword] = useState('')
     const [error, setError] = useState('')
     const [isLoading, setIsLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
-
-        if (password !== confirmPassword) {
-            setError('Passwords do not match')
-            return
-        }
-
-        if (password.length < 6) {
-            setError('Password must be at least 6 characters')
-            return
-        }
-
         setIsLoading(true)
 
         try {
-            await signUp({ name, email, password })
+            await signIn({ email, password })
             navigate('/')
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Sign up failed')
+            setError(err instanceof Error ? err.message : 'Sign in failed')
         } finally {
             setIsLoading(false)
         }
@@ -47,8 +34,8 @@ export default function SignUp() {
         <div className="flex items-center justify-center min-h-screen bg-muted/40">
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle>Sign Up</CardTitle>
-                    <CardDescription>Create a new account to get started</CardDescription>
+                    <CardTitle>Sign In</CardTitle>
+                    <CardDescription>Enter your credentials to access your account</CardDescription>
                 </CardHeader>
                 <form onSubmit={handleSubmit}>
                     <CardContent className="space-y-4">
@@ -57,18 +44,6 @@ export default function SignUp() {
                                 <AlertDescription>{error}</AlertDescription>
                             </Alert>
                         )}
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Name</Label>
-                            <Input
-                                id="name"
-                                type="text"
-                                placeholder="John Doe"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                required
-                                disabled={isLoading}
-                            />
-                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
                             <Input
@@ -92,26 +67,23 @@ export default function SignUp() {
                                 disabled={isLoading}
                             />
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="confirmPassword">Confirm Password</Label>
-                            <Input
-                                id="confirmPassword"
-                                type="password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                required
-                                disabled={isLoading}
-                            />
+                        <div className="text-sm text-muted-foreground">
+                            <p>Demo accounts:</p>
+                            <ul className="list-disc list-inside space-y-1 mt-2">
+                                <li>Admin: admin@example.com / admin123</li>
+                                <li>Employee: employee@example.com / employee123</li>
+                                <li>User: user@example.com / user123</li>
+                            </ul>
                         </div>
                     </CardContent>
                     <CardFooter className="flex flex-col space-y-4">
                         <Button type="submit" className="w-full" disabled={isLoading}>
-                            {isLoading ? 'Creating account...' : 'Sign Up'}
+                            {isLoading ? 'Signing in...' : 'Sign In'}
                         </Button>
                         <p className="text-sm text-center text-muted-foreground">
-                            Already have an account?{' '}
-                            <Link to="/signin" className="text-primary hover:underline">
-                                Sign In
+                            Don't have an account?{' '}
+                            <Link to="/signup" className="text-primary hover:underline">
+                                Sign Up
                             </Link>
                         </p>
                     </CardFooter>

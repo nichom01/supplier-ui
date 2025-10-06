@@ -8,7 +8,9 @@ export type Product = {
     volume: number
     category: string
     unit_of_measure: string
-    price?: number  // Added for sales order functionality
+    price?: number  // For sale products - price per unit
+    product_type: 'sale' | 'hire'  // Determines if product is for sale or hire
+    daily_hire_rate?: number  // For hire products - daily rental rate
 }
 
 // Customer types
@@ -93,21 +95,46 @@ export type SalesOrderLine = {
     line_id?: number
     sales_order_id?: number
     product_id: number
-    quantity_ordered: number
+    quantity_ordered: number  // For hire products, this represents days
     quantity_allocated: number
     quantity_shipped: number
-    unit_price: number
+    unit_price: number  // For hire products, this is the daily rate
     status: 'pending' | 'allocated' | 'shipped' | 'delivered'
+    line_type?: 'sale' | 'hire'  // Determines if this is a sale or hire line
+    asset_id?: number  // For hire products, links to specific asset
+    hire_start_date?: string  // For hire products, start date of rental
+    hire_end_date?: string  // For hire products, end date of rental
+}
+
+// Asset types (for hire products)
+export type Asset = {
+    asset_id?: number
+    product_id: number
+    asset_tag: string
+    serial_number?: string
+    status: 'available' | 'on_hire' | 'maintenance' | 'retired'
+    purchase_date: string
+    condition: 'new' | 'good' | 'fair' | 'poor'
+}
+
+export type AssetAvailability = {
+    asset_id: number
+    date: string
+    is_available: boolean
+    sales_order_id?: number  // If booked, which order
 }
 
 // Shopping Cart types
-export type CartItem = {
+export type BasketItem = {
     product: Product
     quantity: number
+    hire_start_date?: string  // For hire products
+    hire_end_date?: string  // For hire products
+    asset_id?: number  // For hire products, selected asset
 }
 
-export type Cart = {
-    items: CartItem[]
+export type Basket = {
+    items: BasketItem[]
     total: number
 }
 
@@ -118,4 +145,34 @@ export type SalesOrdersResponse = {
 
 export type SalesOrderWithLines = SalesOrder & {
     lines: SalesOrderLine[]
+}
+
+// Authentication types
+export type UserRole = 'user' | 'employee' | 'admin'
+
+export type User = {
+    user_id: number
+    email: string
+    name: string
+    role: UserRole
+}
+
+export type AuthCredentials = {
+    email: string
+    password: string
+}
+
+export type SignUpData = {
+    email: string
+    password: string
+    name: string
+}
+
+export type AuthResponse = {
+    user: User
+    token: string
+}
+
+export type AuthError = {
+    message: string
 }

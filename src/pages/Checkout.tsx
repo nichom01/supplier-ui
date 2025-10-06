@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { useCart } from '@/contexts/CartContext'
+import { useBasket } from '@/contexts/BasketContext'
 import { Customer } from '@/types'
 import { customersApi, salesOrdersApi } from '@/services/api'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import { ArrowLeft, Package, CreditCard } from 'lucide-react'
 
 export default function Checkout() {
     const navigate = useNavigate()
-    const { cart, refreshCart } = useCart()
+    const { basket, refreshBasket } = useBasket()
     const [customers, setCustomers] = useState<Customer[]>([])
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>('')
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
@@ -55,8 +55,8 @@ export default function Checkout() {
             return
         }
 
-        if (cart.items.length === 0) {
-            setError('Your cart is empty')
+        if (basket.items.length === 0) {
+            setError('Your basket is empty')
             return
         }
 
@@ -85,8 +85,8 @@ export default function Checkout() {
                 warehouse_id: 1 // Default warehouse
             })
 
-            // Refresh cart to clear it
-            await refreshCart()
+            // Refresh basket to clear it
+            await refreshBasket()
 
             // Navigate to confirmation page
             navigate(`/orders/${order.sales_order_id}`)
@@ -97,17 +97,17 @@ export default function Checkout() {
         }
     }
 
-    if (cart.items.length === 0) {
+    if (basket.items.length === 0) {
         return (
             <div className="space-y-6">
-                <Button variant="ghost" onClick={() => navigate('/cart')}>
+                <Button variant="ghost" onClick={() => navigate('/basket')}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Cart
+                    Back to Basket
                 </Button>
                 <Card>
                     <CardContent className="flex flex-col items-center justify-center py-12">
                         <Package className="h-16 w-16 text-muted-foreground mb-4" />
-                        <h2 className="text-2xl font-semibold mb-2">Your cart is empty</h2>
+                        <h2 className="text-2xl font-semibold mb-2">Your basket is empty</h2>
                         <p className="text-muted-foreground mb-6">
                             Add some products before checking out
                         </p>
@@ -123,9 +123,9 @@ export default function Checkout() {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
-                <Button variant="ghost" onClick={() => navigate('/cart')}>
+                <Button variant="ghost" onClick={() => navigate('/basket')}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Cart
+                    Back to Basket
                 </Button>
                 <h1 className="text-3xl font-bold">Checkout</h1>
             </div>
@@ -301,23 +301,36 @@ export default function Checkout() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-3">
-                                {cart.items.map(item => (
-                                    <div key={item.product.product_id} className="flex justify-between text-sm">
-                                        <span className="flex-1">
-                                            {item.product.name}
-                                            <span className="text-muted-foreground"> x{item.quantity}</span>
-                                        </span>
-                                        <span className="font-medium">
-                                            ${((item.product.price || 0) * item.quantity).toFixed(2)}
-                                        </span>
-                                    </div>
-                                ))}
+                                {basket.items.map(item => {
+                                    const isHire = item.product.product_type === 'hire'
+                                    const unitPrice = isHire
+                                        ? (item.product.daily_hire_rate || 0)
+                                        : (item.product.price || 0)
+                                    const lineTotal = unitPrice * item.quantity
+
+                                    return (
+                                        <div key={item.product.product_id} className="flex justify-between text-sm gap-2">
+                                            <span className="flex-1">
+                                                {item.product.name}
+                                                {isHire && (
+                                                    <span className="text-xs text-blue-600 dark:text-blue-400"> (Hire)</span>
+                                                )}
+                                                <span className="text-muted-foreground">
+                                                    {' '}x{item.quantity}{isHire ? ' days' : ''}
+                                                </span>
+                                            </span>
+                                            <span className="font-medium">
+                                                ${lineTotal.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    )
+                                })}
                             </div>
 
                             <div className="border-t pt-4 space-y-2">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Subtotal</span>
-                                    <span>${cart.total.toFixed(2)}</span>
+                                    <span>${basket.total.toFixed(2)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Shipping</span>
@@ -328,7 +341,7 @@ export default function Checkout() {
                             <div className="border-t pt-4">
                                 <div className="flex justify-between text-lg font-semibold">
                                     <span>Total</span>
-                                    <span>${cart.total.toFixed(2)}</span>
+                                    <span>${basket.total.toFixed(2)}</span>
                                 </div>
                             </div>
                         </CardContent>

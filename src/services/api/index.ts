@@ -2,5 +2,6 @@
 export { productsApi } from './products'
 export { chartsApi } from './charts'
 export { customersApi } from './customers'
-export { cartApi } from './cart'
+export { basketApi } from './basket'
 export { salesOrdersApi } from './salesOrders'
+export { authApi } from './auth'

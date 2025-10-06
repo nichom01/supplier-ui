@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { Product } from '@/types'
 import { productsApi } from '@/services/api'
-import { useCart } from '@/contexts/CartContext'
+import { useBasket } from '@/contexts/BasketContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -13,12 +13,12 @@ import { toast } from 'sonner'
 export default function ProductDetail() {
     const { id } = useParams<{ id: string }>()
     const navigate = useNavigate()
-    const { addToCart } = useCart()
+    const { addToBasket } = useBasket()
     const [product, setProduct] = useState<Product | null>(null)
     const [quantity, setQuantity] = useState(1)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    const [addingToCart, setAddingToCart] = useState(false)
+    const [addingToBasket, setAddingToBasket] = useState(false)
 
     useEffect(() => {
         if (id) {
@@ -42,22 +42,22 @@ export default function ProductDetail() {
         setQuantity(prev => Math.max(1, prev + delta))
     }
 
-    const handleAddToCart = async () => {
+    const handleAddToBasket = async () => {
         if (!product?.product_id) return
 
         try {
-            setAddingToCart(true)
-            await addToCart(product.product_id, quantity)
-            toast.success('Added to cart', {
-                description: `${quantity} × ${product.name} added to your cart`
+            setAddingToBasket(true)
+            await addToBasket(product.product_id, quantity)
+            toast.success('Added to basket', {
+                description: `${quantity} × ${product.name} added to your basket`
             })
         } catch (err) {
-            console.error('Failed to add to cart:', err)
-            toast.error('Failed to add to cart', {
+            console.error('Failed to add to basket:', err)
+            toast.error('Failed to add to basket', {
                 description: 'Please try again'
             })
         } finally {
-            setAddingToCart(false)
+            setAddingToBasket(false)
         }
     }
 
@@ -65,12 +65,12 @@ export default function ProductDetail() {
         if (!product?.product_id) return
 
         try {
-            setAddingToCart(true)
-            await addToCart(product.product_id, quantity)
-            navigate('/cart')
+            setAddingToBasket(true)
+            await addToBasket(product.product_id, quantity)
+            navigate('/basket')
         } catch (err) {
-            console.error('Failed to add to cart:', err)
-            setAddingToCart(false)
+            console.error('Failed to add to basket:', err)
+            setAddingToBasket(false)
         }
     }
 
@@ -156,7 +156,7 @@ export default function ProductDetail() {
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Add to Cart</CardTitle>
+                            <CardTitle>Add to Basket</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
@@ -190,23 +190,23 @@ export default function ProductDetail() {
 
                             <div className="flex items-center justify-between text-lg font-semibold">
                                 <span>Total:</span>
-                                <span>${totalPrice.toFixed(2)}</span>
+                                <span>£{totalPrice.toFixed(2)}</span>
                             </div>
                         </CardContent>
                         <CardFooter className="flex gap-2">
                             <Button
                                 className="flex-1"
                                 variant="outline"
-                                onClick={handleAddToCart}
-                                disabled={addingToCart}
+                                onClick={handleAddToBasket}
+                                disabled={addingToBasket}
                             >
                                 <ShoppingCart className="h-4 w-4 mr-2" />
-                                Add to Cart
+                                Add to Basket
                             </Button>
                             <Button
                                 className="flex-1"
                                 onClick={handleBuyNow}
-                                disabled={addingToCart}
+                                disabled={addingToBasket}
                             >
                                 Buy Now
                             </Button>

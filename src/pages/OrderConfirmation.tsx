@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router'
-import { SalesOrderWithLines, Customer } from '@/types'
-import { salesOrdersApi, customersApi } from '@/services/api'
+import { SalesOrderWithLines, Customer, Product } from '@/types'
+import { salesOrdersApi, customersApi, productsApi } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle2, Package, Calendar, Truck, CreditCard, MapPin } from 'lucide-react'
@@ -11,6 +11,7 @@ export default function OrderConfirmation() {
     const navigate = useNavigate()
     const [order, setOrder] = useState<SalesOrderWithLines | null>(null)
     const [customer, setCustomer] = useState<Customer | null>(null)
+    const [products, setProducts] = useState<Map<number, Product>>(new Map())
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
@@ -32,6 +33,18 @@ export default function OrderConfirmation() {
                 (c: Customer) => c.customer_id === orderData.customer_id
             )
             setCustomer(customerData || null)
+
+            // Load product details for all order lines
+            const productMap = new Map<number, Product>()
+            for (const line of orderData.lines) {
+                try {
+                    const product = await productsApi.getById(line.product_id)
+                    productMap.set(line.product_id, product)
+                } catch (err) {
+                    console.error(`Failed to load product ${line.product_id}:`, err)
+                }
+            }
+            setProducts(productMap)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load order details')
         } finally {
@@ -207,30 +220,60 @@ export default function OrderConfirmation() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {order.lines.map(line => (
-                                    <div
-                                        key={line.line_id}
-                                        className="flex justify-between items-center py-3 border-b last:border-0"
-                                    >
-                                        <div className="flex-1">
-                                            <p className="font-medium">Product ID: {line.product_id}</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Quantity: {line.quantity_ordered}
-                                            </p>
-                                            <span className={`text-xs px-2 py-0.5 rounded capitalize ${getStatusColor(line.status)}`}>
-                                                {line.status}
-                                            </span>
+                                {order.lines.map(line => {
+                                    const product = products.get(line.product_id)
+                                    const isHire = line.line_type === 'hire'
+
+                                    return (
+                                        <div
+                                            key={line.line_id}
+                                            className="flex justify-between items-start py-3 border-b last:border-0"
+                                        >
+                                            <div className="flex-1">
+                                                <p className="font-medium">
+                                                    {product?.name || `Product #${line.product_id}`}
+                                                </p>
+                                                {product?.sku && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        SKU: {product.sku}
+                                                    </p>
+                                                )}
+                                                {isHire ? (
+                                                    <>
+                                                        <p className="text-sm text-blue-600 dark:text-blue-400 font-medium mt-1">
+                                                            Hire Period: {line.quantity_ordered} days
+                                                        </p>
+                                                        {line.hire_start_date && line.hire_end_date && (
+                                                            <p className="text-sm text-muted-foreground">
+                                                                {formatDate(line.hire_start_date)} - {formatDate(line.hire_end_date)}
+                                                            </p>
+                                                        )}
+                                                        {line.asset_id && (
+                                                            <p className="text-xs text-muted-foreground">
+                                                                Asset ID: {line.asset_id}
+                                                            </p>
+                                                        )}
+                                                    </>
+                                                ) : (
+                                                    <p className="text-sm text-muted-foreground">
+                                                        Quantity: {line.quantity_ordered}
+                                                    </p>
+                                                )}
+                                                <span className={`text-xs px-2 py-0.5 rounded capitalize inline-block mt-1 ${getStatusColor(line.status)}`}>
+                                                    {line.status}
+                                                </span>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm text-muted-foreground">
+                                                    ${line.unit_price.toFixed(2)} {isHire ? 'per day' : 'each'}
+                                                </p>
+                                                <p className="font-semibold">
+                                                    ${(line.unit_price * line.quantity_ordered).toFixed(2)}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-sm text-muted-foreground">
-                                                ${line.unit_price.toFixed(2)} each
-                                            </p>
-                                            <p className="font-semibold">
-                                                ${(line.unit_price * line.quantity_ordered).toFixed(2)}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
+                                    )
+                                })}
                             </div>
                         </CardContent>
                     </Card>

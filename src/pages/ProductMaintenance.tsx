@@ -27,7 +27,8 @@ export default function ProductMaintenance() {
         weight: 0,
         volume: 0,
         category: "",
-        unit_of_measure: ""
+        unit_of_measure: "",
+        product_type: "sale"
     })
 
     // Fetch products on component mount
@@ -73,7 +74,8 @@ export default function ProductMaintenance() {
                 weight: 0,
                 volume: 0,
                 category: "",
-                unit_of_measure: ""
+                unit_of_measure: "",
+                product_type: "sale"
             })
             setEditingProduct(null)
         } catch (error) {
@@ -103,7 +105,8 @@ export default function ProductMaintenance() {
             weight: 0,
             volume: 0,
             category: "",
-            unit_of_measure: ""
+            unit_of_measure: "",
+            product_type: "sale"
         })
         setEditingProduct(null)
     }
