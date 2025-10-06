@@ -1,10 +1,11 @@
 import {
-    CircleAlert,
-    Files,
     Gauge,
     ShoppingCart,
     Package,
-    LucideIcon
+    Settings,
+    CircleHelp,
+    LucideIcon,
+    Home
 } from 'lucide-react'
 
 type MenuItemType = {
@@ -18,6 +19,11 @@ type MenuType = MenuItemType[]
 
 export const mainMenu: MenuType = [
     {
+        title: 'Home',
+        url: '/home',
+        icon: Home
+    },
+    {
         title: 'Dashboard',
         url: '/',
         icon: Gauge
@@ -28,18 +34,14 @@ export const mainMenu: MenuType = [
         icon: ShoppingCart
     },
     {
-        title: 'Orders',
-        url: '/orders',
-        icon: Package
-    },
-    {
-        title: 'Pages',
+        title: 'Maintenance',
         url: '/pages',
-        icon: Files,
+        icon: Settings,
         items: [
             {
-                title: 'Sample Page',
-                url: '/pages/sample',
+                title: 'Orders',
+                url: '/orders',
+                icon: Package
             },
             {
                 title: 'Product Maintenance',
@@ -69,19 +71,11 @@ export const mainMenu: MenuType = [
                 title: 'Graph',
                 url: '/pages/chart',
             },
-            {
-                title: 'Sign In',
-                url: '/pages/login',
-            },
-            {
-                title: 'Sign Up',
-                url: '/pages/signup',
-            },
         ]
     },
     {
-        title: 'Error',
-        url: '/404',
-        icon: CircleAlert,
+        title: 'Help',
+        url: '/pages/sample',
+        icon: CircleHelp
     },
 ]

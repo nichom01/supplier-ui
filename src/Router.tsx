@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import { AppLayout } from './components/app-layout'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import NotMatch from './pages/NotMatch'
+import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Sample from './pages/Sample'
 import ProductMaintenance from './pages/ProductMaintenance'
@@ -34,6 +35,11 @@ export default function Router() {
                 <Route path="" element={
                     <ProtectedRoute allowedRoles={['user', 'employee', 'admin']}>
                         <Dashboard />
+                    </ProtectedRoute>
+                } />
+                <Route path="home" element={
+                    <ProtectedRoute allowedRoles={['user', 'employee', 'admin']}>
+                        <Home />
                     </ProtectedRoute>
                 } />
                 <Route path="products" element={
