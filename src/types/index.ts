@@ -204,3 +204,22 @@ export type BulkPricingUpdateRequest = {
 export type PricingResponse = {
     pricing: DefaultPricing[]
 }
+
+// Supplier types
+export type Supplier = {
+    supplier_id?: number
+    name: string
+    contact_info: string
+    address_name: string
+    address_line1: string
+    address_line2: string
+    address_line3: string
+    address_line4: string
+    address_line5: string
+    address_postcode: string
+    status: string
+}
+
+export type SuppliersResponse = {
+    suppliers: Supplier[]
+}

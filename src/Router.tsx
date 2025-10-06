@@ -7,6 +7,7 @@ import Sample from './pages/Sample'
 import ProductMaintenance from './pages/ProductMaintenance'
 import CustomerMaintenance from './pages/CustomerMaintenance'
 import PricingMaintenance from './pages/PricingMaintenance'
+import SupplierMaintenance from './pages/SupplierMaintenance'
 import ComingSoon from './pages/ComingSoon'
 import Chart from './pages/Chart'
 import SignIn from './pages/SignIn'
@@ -90,6 +91,11 @@ export default function Router() {
                     <Route path="pricing-maintenance" element={
                         <ProtectedRoute allowedRoles={['admin']}>
                             <PricingMaintenance />
+                        </ProtectedRoute>
+                    } />
+                    <Route path="supplier-maintenance" element={
+                        <ProtectedRoute allowedRoles={['admin']}>
+                            <SupplierMaintenance />
                         </ProtectedRoute>
                     } />
                     <Route path="feature" element={

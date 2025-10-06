@@ -6,7 +6,8 @@ import { mockMonthlyChartData, mockDailyChartData, mockRadarChartData, mockPieCh
 import { mockAssets, mockAssetAvailability } from './data/assets'
 import { mockUsers, mockPasswords } from './data/users'
 import { mockPricing } from './data/pricing'
-import { Product, Customer, SalesOrder, SalesOrderLine, BasketItem, User, AuthCredentials, SignUpData, DefaultPricing, PricingUpdateRequest, BulkPricingUpdateRequest } from '@/types'
+import { mockSuppliers } from './data/suppliers'
+import { Product, Customer, SalesOrder, SalesOrderLine, BasketItem, User, AuthCredentials, SignUpData, DefaultPricing, PricingUpdateRequest, BulkPricingUpdateRequest, Supplier } from '@/types'
 
 // In-memory storage for products (simulates a database)
 let products = [...mockProducts]
@@ -31,6 +32,9 @@ const passwords = { ...mockPasswords }
 
 // In-memory storage for pricing
 let pricing = [...mockPricing]
+
+// In-memory storage for suppliers (simulates a database)
+let suppliers = [...mockSuppliers]
 
 // In-memory session storage (token -> user_id)
 const sessions: Record<string, number> = {}
@@ -757,5 +761,70 @@ export const handlers = [
             results,
             errors
         })
+    }),
+
+    // Supplier endpoints
+    // Get all suppliers
+    http.get('/api/suppliers', async () => {
+        await delay(300)
+        return HttpResponse.json({ suppliers })
+    }),
+
+    // Get single supplier
+    http.get('/api/suppliers/:id', async ({ params }) => {
+        await delay(200)
+        const { id } = params
+        const supplier = suppliers.find(s => s.supplier_id === Number(id))
+
+        if (!supplier) {
+            return new HttpResponse(null, { status: 404 })
+        }
+
+        return HttpResponse.json(supplier)
+    }),
+
+    // Create supplier
+    http.post('/api/suppliers', async ({ request }) => {
+        await delay(400)
+        const newSupplier = await request.json() as Supplier
+
+        const supplierWithId = {
+            ...newSupplier,
+            supplier_id: Math.max(0, ...suppliers.map(s => s.supplier_id || 0)) + 1
+        }
+
+        suppliers.push(supplierWithId)
+        return HttpResponse.json(supplierWithId, { status: 201 })
+    }),
+
+    // Update supplier
+    http.put('/api/suppliers/:id', async ({ params, request }) => {
+        await delay(400)
+        const { id } = params
+        const updatedSupplier = await request.json() as Supplier
+
+        const index = suppliers.findIndex(s => s.supplier_id === Number(id))
+
+        if (index === -1) {
+            return new HttpResponse(null, { status: 404 })
+        }
+
+        suppliers[index] = { ...updatedSupplier, supplier_id: Number(id) }
+        return HttpResponse.json(suppliers[index])
+    }),
+
+    // Delete supplier
+    http.delete('/api/suppliers/:id', async ({ params }) => {
+        await delay(300)
+        const { id } = params
+
+        const index = suppliers.findIndex(s => s.supplier_id === Number(id))
+
+        if (index === -1) {
+            return new HttpResponse(null, { status: 404 })
+        }
+
+        suppliers.splice(index, 1)
+        return new HttpResponse(null, { status: 204 })
     }),
 ]
