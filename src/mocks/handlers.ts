@@ -660,10 +660,11 @@ export const handlers = [
         const { productId } = params
         const update = await request.json() as PricingUpdateRequest
 
-        const index = pricing.findIndex(p => p.product_id === Number(productId))
+        // Find the current active pricing (one without effective_to date)
+        const index = pricing.findIndex(p => p.product_id === Number(productId) && !p.effective_to)
         if (index === -1) {
             return HttpResponse.json(
-                { message: 'Pricing not found' },
+                { message: 'Active pricing not found for this product' },
                 { status: 404 }
             )
         }
@@ -714,15 +715,16 @@ export const handlers = [
         const errors: string[] = []
 
         for (const update of updates) {
-            const index = pricing.findIndex(p => p.product_id === update.product_id)
+            // Find the current active pricing (one without effective_to date)
+            const index = pricing.findIndex(p => p.product_id === update.product_id && !p.effective_to)
             const product = products.find(p => p.product_id === update.product_id)
 
             if (index === -1 || !product) {
-                errors.push(`Product ID ${update.product_id} not found`)
+                errors.push(`Product ID ${update.product_id} not found or no active pricing`)
                 continue
             }
 
-            // Archive old pricing
+            // Archive old pricing by setting effective_to date
             pricing[index].effective_to = today
 
             // Create new pricing entry
