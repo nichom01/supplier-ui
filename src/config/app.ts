@@ -8,6 +8,11 @@ type AppConfigType = {
         name: string,
         url: string
     },
+    currency: {
+        code: string,
+        symbol: string,
+        locale: string
+    }
 }
 
 export const appConfig: AppConfigType = {
@@ -19,6 +24,11 @@ export const appConfig: AppConfigType = {
     author: {
         name: "nichom01",
         url: "https://github.com/nichom01",
+    },
+    currency: {
+        code: "GBP",
+        symbol: "£",
+        locale: "en-GB"
     }
 }
 

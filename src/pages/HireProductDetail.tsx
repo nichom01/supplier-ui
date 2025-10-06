@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { DayPicker, DateRange } from 'react-day-picker'
 import { format, differenceInDays, addDays, addMonths, parseISO } from 'date-fns'
 import 'react-day-picker/dist/style.css'
+import { formatCurrency } from '@/lib/utils'
 
 export default function HireProductDetail() {
     const { id } = useParams<{ id: string }>()
@@ -243,7 +244,7 @@ export default function HireProductDetail() {
                     </div>
 
                     <div className="text-4xl font-bold">
-                        ${product.daily_hire_rate?.toFixed(2) || '0.00'}
+                        {formatCurrency(product.daily_hire_rate || 0)}
                         <span className="text-xl text-muted-foreground"> / day</span>
                     </div>
 
@@ -389,7 +390,7 @@ export default function HireProductDetail() {
                                                         </div>
                                                         <div className="flex items-center justify-between text-lg font-semibold pt-2 border-t">
                                                             <span>Total:</span>
-                                                            <span>${totalPrice.toFixed(2)}</span>
+                                                            <span>{formatCurrency(totalPrice)}</span>
                                                         </div>
                                                     </>
                                                 )}

@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, ShoppingCart, Plus, Minus } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatCurrency } from '@/lib/utils'
 
 export default function ProductDetail() {
     const { id } = useParams<{ id: string }>()
@@ -124,7 +125,7 @@ export default function ProductDetail() {
                     </div>
 
                     <div className="text-4xl font-bold">
-                        ${product.price?.toFixed(2) || '0.00'}
+                        {formatCurrency(product.price || 0)}
                     </div>
 
                     <Card>
@@ -190,7 +191,7 @@ export default function ProductDetail() {
 
                             <div className="flex items-center justify-between text-lg font-semibold">
                                 <span>Total:</span>
-                                <span>£{totalPrice.toFixed(2)}</span>
+                                <span>{formatCurrency(totalPrice)}</span>
                             </div>
                         </CardContent>
                         <CardFooter className="flex gap-2">

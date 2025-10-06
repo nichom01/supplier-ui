@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input'
 import { ShoppingCart, Search } from 'lucide-react'
 import { toast } from 'sonner'
+import { formatCurrency } from '@/lib/utils'
 
 export default function Products() {
     const navigate = useNavigate()
@@ -154,9 +155,9 @@ export default function Products() {
                         <CardFooter className="flex justify-between items-center border-t pt-4">
                             <div className="flex flex-col">
                                 <span className="text-2xl font-bold">
-                                    ${product.product_type === 'hire'
-                                        ? product.daily_hire_rate?.toFixed(2)
-                                        : product.price?.toFixed(2) || '0.00'}
+                                    {product.product_type === 'hire'
+                                        ? formatCurrency(product.daily_hire_rate || 0)
+                                        : formatCurrency(product.price || 0)}
                                 </span>
                                 {product.product_type === 'hire' && (
                                     <span className="text-xs text-muted-foreground">per day</span>

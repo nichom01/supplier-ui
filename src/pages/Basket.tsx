@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 
 export default function Cart() {
     const navigate = useNavigate()
@@ -186,19 +187,19 @@ export default function Cart() {
                                                     {item.product.product_type === 'hire' ? (
                                                         <>
                                                             <div className="text-sm text-muted-foreground">
-                                                                ${item.product.daily_hire_rate?.toFixed(2)} per day
+                                                                {formatCurrency(item.product.daily_hire_rate)} per day
                                                             </div>
                                                             <div className="text-lg font-semibold">
-                                                                ${((item.product.daily_hire_rate || 0) * item.quantity).toFixed(2)}
+                                                                {formatCurrency((item.product.daily_hire_rate || 0) * item.quantity)}
                                                             </div>
                                                         </>
                                                     ) : (
                                                         <>
                                                             <div className="text-sm text-muted-foreground">
-                                                                ${item.product.price?.toFixed(2)} each
+                                                                {formatCurrency(item.product.price)} each
                                                             </div>
                                                             <div className="text-lg font-semibold">
-                                                                ${((item.product.price || 0) * item.quantity).toFixed(2)}
+                                                                {formatCurrency((item.product.price || 0) * item.quantity)}
                                                             </div>
                                                         </>
                                                     )}
@@ -223,7 +224,7 @@ export default function Cart() {
                                         <span className="text-muted-foreground">
                                             Items ({basket.items.reduce((sum, item) => sum + item.quantity, 0)})
                                         </span>
-                                        <span>${basket.total.toFixed(2)}</span>
+                                        <span>{formatCurrency(basket.total)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-muted-foreground">Shipping</span>
@@ -234,7 +235,7 @@ export default function Cart() {
                                 <div className="border-t pt-4">
                                     <div className="flex justify-between text-lg font-semibold">
                                         <span>Total</span>
-                                        <span>${basket.total.toFixed(2)}</span>
+                                        <span>{formatCurrency(basket.total)}</span>
                                     </div>
                                 </div>
                             </CardContent>

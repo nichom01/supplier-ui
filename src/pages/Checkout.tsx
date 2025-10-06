@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Input } from '@/components/ui/input'
 import { ArrowLeft, Package, CreditCard } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 
 export default function Checkout() {
     const navigate = useNavigate()
@@ -320,7 +321,7 @@ export default function Checkout() {
                                                 </span>
                                             </span>
                                             <span className="font-medium">
-                                                ${lineTotal.toFixed(2)}
+                                                {formatCurrency(lineTotal)}
                                             </span>
                                         </div>
                                     )
@@ -330,7 +331,7 @@ export default function Checkout() {
                             <div className="border-t pt-4 space-y-2">
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Subtotal</span>
-                                    <span>${basket.total.toFixed(2)}</span>
+                                    <span>{formatCurrency(basket.total)}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-muted-foreground">Shipping</span>
@@ -341,7 +342,7 @@ export default function Checkout() {
                             <div className="border-t pt-4">
                                 <div className="flex justify-between text-lg font-semibold">
                                     <span>Total</span>
-                                    <span>${basket.total.toFixed(2)}</span>
+                                    <span>{formatCurrency(basket.total)}</span>
                                 </div>
                             </div>
                         </CardContent>

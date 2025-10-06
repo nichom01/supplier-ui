@@ -5,6 +5,7 @@ import { salesOrdersApi, customersApi, productsApi } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle2, Package, Calendar, Truck, CreditCard, MapPin } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 
 export default function OrderConfirmation() {
     const { id } = useParams<{ id: string }>()
@@ -265,10 +266,10 @@ export default function OrderConfirmation() {
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-sm text-muted-foreground">
-                                                    ${line.unit_price.toFixed(2)} {isHire ? 'per day' : 'each'}
+                                                    {formatCurrency(line.unit_price)} {isHire ? 'per day' : 'each'}
                                                 </p>
                                                 <p className="font-semibold">
-                                                    ${(line.unit_price * line.quantity_ordered).toFixed(2)}
+                                                    {formatCurrency(line.unit_price * line.quantity_ordered)}
                                                 </p>
                                             </div>
                                         </div>
@@ -291,14 +292,14 @@ export default function OrderConfirmation() {
                                     <span className="text-muted-foreground">
                                         Items ({order.lines.reduce((sum, line) => sum + line.quantity_ordered, 0)})
                                     </span>
-                                    <span>${order.total_amount.toFixed(2)}</span>
+                                    <span>{formatCurrency(order.total_amount)}</span>
                                 </div>
                             </div>
 
                             <div className="border-t pt-4">
                                 <div className="flex justify-between text-lg font-semibold">
                                     <span>Total</span>
-                                    <span>${order.total_amount.toFixed(2)}</span>
+                                    <span>{formatCurrency(order.total_amount)}</span>
                                 </div>
                             </div>
                         </CardContent>

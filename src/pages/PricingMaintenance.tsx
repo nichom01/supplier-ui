@@ -27,6 +27,7 @@ import { pricingApi } from "@/services/api"
 import { DefaultPricing, PricingUpdateRequest } from "@/types"
 import { toast } from "sonner"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { formatCurrency } from "@/lib/utils"
 
 export default function PricingMaintenance() {
     const [pricing, setPricing] = useState<DefaultPricing[]>([])
@@ -310,10 +311,6 @@ export default function PricingMaintenance() {
         }
     }
 
-    const formatCurrency = (value: number | undefined) => {
-        if (value === undefined) return '-'
-        return `$${value.toFixed(2)}`
-    }
 
     if (loading) {
         return (
