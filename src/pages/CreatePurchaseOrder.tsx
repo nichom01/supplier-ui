@@ -56,9 +56,13 @@ export default function CreatePurchaseOrder() {
     useEffect(() => {
         if (selectedProductId && selectedSupplierId) {
             loadSupplierPrice(Number(selectedSupplierId), Number(selectedProductId))
+        } else if (selectedProductId) {
+            // If product selected but no supplier, use default product price
+            const product = products.find(p => p.product_id === Number(selectedProductId))
+            setUnitPrice(product?.price || product?.daily_hire_rate || 0)
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedProductId, selectedSupplierId])
+    }, [selectedProductId])
 
     const loadSuppliers = async () => {
         try {
@@ -74,7 +78,7 @@ export default function CreatePurchaseOrder() {
     const loadProducts = async () => {
         try {
             const data = await productsApi.getAll()
-            setProducts(data.products)
+            setProducts(data)
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load products')
         }
@@ -162,7 +166,7 @@ export default function CreatePurchaseOrder() {
             setIsLoading(true)
             setError(null)
 
-            const order = await purchaseOrdersApi.create({
+            await purchaseOrdersApi.create({
                 supplier_id: Number(selectedSupplierId),
                 delivery_date: new Date(deliveryDate).toISOString(),
                 lines: basket.map(item => ({
