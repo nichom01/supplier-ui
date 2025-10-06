@@ -19,6 +19,7 @@ export default function ProductMaintenance() {
     const [products, setProducts] = useState<Product[]>([])
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
     const [loading, setLoading] = useState(true)
+    const [filterText, setFilterText] = useState("")
     const [formData, setFormData] = useState<Product>({
         sku: "",
         name: "",
@@ -106,6 +107,22 @@ export default function ProductMaintenance() {
         })
         setEditingProduct(null)
     }
+
+    // Filter products based on search text across all fields
+    const filteredProducts = products.filter(product => {
+        if (!filterText) return true
+
+        const searchText = filterText.toLowerCase()
+        return (
+            product.sku.toLowerCase().includes(searchText) ||
+            product.name.toLowerCase().includes(searchText) ||
+            product.description.toLowerCase().includes(searchText) ||
+            product.category.toLowerCase().includes(searchText) ||
+            product.unit_of_measure.toLowerCase().includes(searchText) ||
+            product.weight.toString().includes(searchText) ||
+            product.volume.toString().includes(searchText)
+        )
+    })
 
     if (loading) {
         return (
@@ -201,7 +218,7 @@ export default function ProductMaintenance() {
                                     value={formData.category}
                                     onValueChange={(value) => setFormData({ ...formData, category: value })}
                                 >
-                                    <SelectTrigger id="category">
+                                    <SelectTrigger id="category" tabIndex={0}>
                                         <SelectValue placeholder="Select category" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -220,7 +237,7 @@ export default function ProductMaintenance() {
                                     value={formData.unit_of_measure}
                                     onValueChange={(value) => setFormData({ ...formData, unit_of_measure: value })}
                                 >
-                                    <SelectTrigger id="unit">
+                                    <SelectTrigger id="unit" tabIndex={0}>
                                         <SelectValue placeholder="Select unit" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -234,11 +251,11 @@ export default function ProductMaintenance() {
                             </div>
 
                             <div className="flex gap-2">
-                                <Button type="submit" className="flex-1">
+                                <Button type="submit" className="flex-1" tabIndex={0}>
                                     {editingProduct ? "Update Product" : "Create Product"}
                                 </Button>
                                 {editingProduct && (
-                                    <Button type="button" variant="outline" onClick={handleCancel}>
+                                    <Button type="button" variant="outline" onClick={handleCancel} tabIndex={0}>
                                         Cancel
                                     </Button>
                                 )}
@@ -258,8 +275,29 @@ export default function ProductMaintenance() {
                                 No products yet. Create your first product to get started.
                             </p>
                         ) : (
-                            <div className="space-y-3">
-                                {products.map((product) => (
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="filter">Filter Products</Label>
+                                    <Input
+                                        id="filter"
+                                        placeholder="Search by SKU, name, description, category, unit, weight, or volume..."
+                                        value={filterText}
+                                        onChange={(e) => setFilterText(e.target.value)}
+                                        tabIndex={-1}
+                                    />
+                                    {filterText && (
+                                        <p className="text-xs text-muted-foreground">
+                                            Showing {filteredProducts.length} of {products.length} products
+                                        </p>
+                                    )}
+                                </div>
+                                {filteredProducts.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground text-center py-8">
+                                        No products match your filter.
+                                    </p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {filteredProducts.map((product) => (
                                     <div
                                         key={product.product_id}
                                         className="p-4 border rounded-lg hover:bg-accent/50 transition-colors"
@@ -294,7 +332,9 @@ export default function ProductMaintenance() {
                                             </div>
                                         </div>
                                     </div>
-                                ))}
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </CardContent>
