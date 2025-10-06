@@ -52,6 +52,9 @@ on:
 react-shadcn-starter/
 ├── public/            # Public assets
 ├── src/               # Application source code
+│   ├── assets/        # Static assets (images, etc.)
+│   │   └── images/    # Image assets
+│   │       └── products/  # Product images
 │   ├── components/    # React components
 │   ├── context/       # contexts components
 │   ├── config/        # Config data
@@ -66,6 +69,54 @@ react-shadcn-starter/
 ├── tsconfig.json      # TypeScript configuration
 └── vite.config.ts     # Vite configuration
 ```
+
+## Product Images
+
+Product images are stored in `src/assets/images/products/` and are referenced in the product data by filename.
+
+### Image Naming Convention
+
+Product images should follow these naming conventions:
+
+- **Primary Image**: `{SKU}.{extension}` (e.g., `ELEC-001.jpg`, `FURN-045.png`)
+- **Additional Images**: `{SKU}-{index}.{extension}` (e.g., `ELEC-001-1.jpg`, `ELEC-001-2.jpg`)
+
+### Supported Formats
+
+- JPG/JPEG (`.jpg`, `.jpeg`)
+- PNG (`.png`)
+- WebP (`.webp`)
+- SVG (`.svg`)
+
+### Adding New Product Images
+
+1. Place your image files in `src/assets/images/products/`
+2. Name them according to the product SKU (e.g., `ELEC-001.jpg`)
+3. Update the product data to reference the image:
+
+```typescript
+{
+    product_id: 1,
+    sku: "ELEC-001",
+    name: "Wireless Mouse",
+    // ... other fields
+    image: "ELEC-001.jpg",  // Primary image
+    images: ["ELEC-001.jpg", "ELEC-001-1.jpg", "ELEC-001-2.jpg"]  // Multiple images for carousel
+}
+```
+
+### Image Display Locations
+
+- **Product Cards** (Products page): Shows the primary image in a fixed 48px height container
+- **Product Detail Page**:
+  - Large image display with aspect-square ratio
+  - Image carousel with thumbnail navigation (when multiple images are provided)
+  - Click thumbnails to switch between images
+- **Order Detail Page**: Small 64x64px thumbnail next to each order line item
+
+### Fallback Image
+
+If a product has no image specified or the image file is not found, the system automatically displays a placeholder image (`no-image.svg`).
 
 ## Diagrams
 

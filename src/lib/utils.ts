@@ -19,3 +19,15 @@ export function formatCurrency(value: number | undefined): string {
 
   return formatter.format(value)
 }
+
+export function getProductImageUrl(imagePath?: string): string {
+  // Import the no-image placeholder
+  const noImageUrl = '/src/assets/images/products/no-image.svg'
+
+  if (!imagePath) {
+    return noImageUrl
+  }
+
+  // Return the path to the image - Vite will handle it
+  return `/src/assets/images/products/${imagePath}`
+}

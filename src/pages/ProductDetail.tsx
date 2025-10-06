@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, ShoppingCart, Plus, Minus } from 'lucide-react'
 import { toast } from 'sonner'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getProductImageUrl } from '@/lib/utils'
 
 export default function ProductDetail() {
     const { id } = useParams<{ id: string }>()
@@ -20,6 +20,7 @@ export default function ProductDetail() {
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [addingToBasket, setAddingToBasket] = useState(false)
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
     useEffect(() => {
         if (id) {
@@ -93,6 +94,15 @@ export default function ProductDetail() {
 
     const totalPrice = (product.price || 0) * quantity
 
+    // Build image array for carousel
+    const allImages = product.images && product.images.length > 0
+        ? product.images
+        : product.image
+            ? [product.image]
+            : []
+
+    const currentImage = allImages[selectedImageIndex]
+
     return (
         <div className="space-y-6">
             <Button variant="ghost" onClick={() => navigate('/products')}>
@@ -101,16 +111,43 @@ export default function ProductDetail() {
             </Button>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Product Image Placeholder */}
-                <Card>
-                    <CardContent className="p-0">
-                        <div className="aspect-square bg-muted flex items-center justify-center">
-                            <span className="text-muted-foreground text-6xl">
-                                {product.name.charAt(0)}
-                            </span>
+                {/* Product Images */}
+                <div className="space-y-4">
+                    <Card>
+                        <CardContent className="p-0">
+                            <div className="aspect-square bg-background flex items-center justify-center">
+                                <img
+                                    src={getProductImageUrl(currentImage)}
+                                    alt={product.name}
+                                    className="w-full h-full object-contain"
+                                />
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Image Thumbnails */}
+                    {allImages.length > 1 && (
+                        <div className="grid grid-cols-4 gap-2">
+                            {allImages.map((img, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setSelectedImageIndex(index)}
+                                    className={`aspect-square bg-background rounded-md overflow-hidden border-2 transition-colors ${
+                                        index === selectedImageIndex
+                                            ? 'border-primary'
+                                            : 'border-transparent hover:border-muted-foreground/50'
+                                    }`}
+                                >
+                                    <img
+                                        src={getProductImageUrl(img)}
+                                        alt={`${product.name} - Image ${index + 1}`}
+                                        className="w-full h-full object-contain"
+                                    />
+                                </button>
+                            ))}
                         </div>
-                    </CardContent>
-                </Card>
+                    )}
+                </div>
 
                 {/* Product Details */}
                 <div className="space-y-6">

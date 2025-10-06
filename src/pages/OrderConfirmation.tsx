@@ -5,7 +5,7 @@ import { salesOrdersApi, customersApi, productsApi } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle2, Package, Calendar, Truck, CreditCard, MapPin } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getProductImageUrl } from '@/lib/utils'
 
 export default function OrderConfirmation() {
     const { id } = useParams<{ id: string }>()
@@ -228,8 +228,17 @@ export default function OrderConfirmation() {
                                     return (
                                         <div
                                             key={line.line_id}
-                                            className="flex justify-between items-start py-3 border-b last:border-0"
+                                            className="flex gap-4 items-start py-3 border-b last:border-0"
                                         >
+                                            {/* Product Image */}
+                                            <div className="w-16 h-16 bg-background rounded-md overflow-hidden flex-shrink-0">
+                                                <img
+                                                    src={getProductImageUrl(product?.image)}
+                                                    alt={product?.name || 'Product'}
+                                                    className="w-full h-full object-contain"
+                                                />
+                                            </div>
+
                                             <div className="flex-1">
                                                 <p className="font-medium">
                                                     {product?.name || `Product #${line.product_id}`}

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input'
 import { ShoppingCart, Search } from 'lucide-react'
 import { toast } from 'sonner'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getProductImageUrl } from '@/lib/utils'
 
 export default function Products() {
     const navigate = useNavigate()
@@ -129,6 +129,13 @@ export default function Products() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map(product => (
                     <Card key={product.product_id} className="flex flex-col">
+                        <div className="relative w-full h-48 overflow-hidden bg-background">
+                            <img
+                                src={getProductImageUrl(product.image)}
+                                alt={product.name}
+                                className="w-full h-full object-contain"
+                            />
+                        </div>
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <div>

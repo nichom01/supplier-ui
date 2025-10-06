@@ -11,6 +11,8 @@ export type Product = {
     price?: number  // For sale products - price per unit
     product_type: 'sale' | 'hire'  // Determines if product is for sale or hire
     daily_hire_rate?: number  // For hire products - daily rental rate
+    image?: string  // Primary product image filename
+    images?: string[]  // Additional product images for carousel
 }
 
 // Customer types
