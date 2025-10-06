@@ -180,8 +180,40 @@ export default function PricingMaintenance() {
                 return
             }
 
+            // Helper function to parse CSV line properly handling empty fields
+            const parseCSVLine = (line: string): string[] => {
+                const result: string[] = []
+                let current = ''
+                let inQuotes = false
+
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i]
+                    const nextChar = line[i + 1]
+
+                    if (char === '"') {
+                        if (inQuotes && nextChar === '"') {
+                            // Escaped quote
+                            current += '"'
+                            i++ // Skip next quote
+                        } else {
+                            // Toggle quote mode
+                            inQuotes = !inQuotes
+                        }
+                    } else if (char === ',' && !inQuotes) {
+                        // End of field
+                        result.push(current.trim())
+                        current = ''
+                    } else {
+                        current += char
+                    }
+                }
+                // Add last field
+                result.push(current.trim())
+                return result
+            }
+
             // Parse CSV
-            const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''))
+            const headers = parseCSVLine(lines[0])
             const updates: PricingUpdateRequest[] = []
             const errors: string[] = []
 
@@ -205,13 +237,10 @@ export default function PricingMaintenance() {
             // Parse data rows
             for (let i = 1; i < lines.length; i++) {
                 const line = lines[i]
-                // Simple CSV parsing (doesn't handle all edge cases, but works for basic CSVs)
-                const cells = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g)?.map(cell =>
-                    cell.trim().replace(/^"|"$/g, '').replace(/""/g, '"')
-                ) || []
+                const cells = parseCSVLine(line)
 
-                if (cells.length < headers.length) {
-                    errors.push(`Row ${i + 1}: Invalid number of columns`)
+                if (cells.length !== headers.length) {
+                    errors.push(`Row ${i + 1}: Invalid number of columns (expected ${headers.length}, got ${cells.length})`)
                     continue
                 }
 
