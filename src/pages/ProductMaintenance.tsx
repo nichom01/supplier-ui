@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PageHeader, PageHeaderHeading } from "@/components/page-header"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,17 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Trash2 } from "lucide-react"
-
-type Product = {
-    product_id?: number
-    sku: string
-    name: string
-    description: string
-    weight: number
-    volume: number
-    category: string
-    unit_of_measure: string
-}
+import { productsApi } from "@/services/api"
+import { Product } from "@/types"
 
 const categories = ["Electronics", "Furniture", "Clothing", "Food", "Books", "Other"]
 const unitsOfMeasure = ["kg", "lbs", "oz", "g", "piece", "box", "pallet"]
@@ -27,6 +18,7 @@ const unitsOfMeasure = ["kg", "lbs", "oz", "g", "piece", "box", "pallet"]
 export default function ProductMaintenance() {
     const [products, setProducts] = useState<Product[]>([])
     const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+    const [loading, setLoading] = useState(true)
     const [formData, setFormData] = useState<Product>({
         sku: "",
         name: "",
@@ -37,36 +29,55 @@ export default function ProductMaintenance() {
         unit_of_measure: ""
     })
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault()
-
-        if (editingProduct?.product_id) {
-            // Update existing product
-            setProducts(products.map(p =>
-                p.product_id === editingProduct.product_id
-                    ? { ...formData, product_id: editingProduct.product_id }
-                    : p
-            ))
-        } else {
-            // Create new product
-            const newProduct = {
-                ...formData,
-                product_id: Math.max(0, ...products.map(p => p.product_id || 0)) + 1
+    // Fetch products on component mount
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const data = await productsApi.getAll()
+                setProducts(data)
+            } catch (error) {
+                console.error('Failed to fetch products:', error)
+            } finally {
+                setLoading(false)
             }
-            setProducts([...products, newProduct])
         }
 
-        // Reset form
-        setFormData({
-            sku: "",
-            name: "",
-            description: "",
-            weight: 0,
-            volume: 0,
-            category: "",
-            unit_of_measure: ""
-        })
-        setEditingProduct(null)
+        fetchProducts()
+    }, [])
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+
+        try {
+            if (editingProduct?.product_id) {
+                // Update existing product
+                const updated = await productsApi.update(editingProduct.product_id, {
+                    ...formData,
+                    product_id: editingProduct.product_id
+                })
+                setProducts(products.map(p =>
+                    p.product_id === editingProduct.product_id ? updated : p
+                ))
+            } else {
+                // Create new product
+                const newProduct = await productsApi.create(formData)
+                setProducts([...products, newProduct])
+            }
+
+            // Reset form
+            setFormData({
+                sku: "",
+                name: "",
+                description: "",
+                weight: 0,
+                volume: 0,
+                category: "",
+                unit_of_measure: ""
+            })
+            setEditingProduct(null)
+        } catch (error) {
+            console.error('Failed to save product:', error)
+        }
     }
 
     const handleEdit = (product: Product) => {
@@ -74,8 +85,13 @@ export default function ProductMaintenance() {
         setFormData(product)
     }
 
-    const handleDelete = (productId: number) => {
-        setProducts(products.filter(p => p.product_id !== productId))
+    const handleDelete = async (productId: number) => {
+        try {
+            await productsApi.delete(productId)
+            setProducts(products.filter(p => p.product_id !== productId))
+        } catch (error) {
+            console.error('Failed to delete product:', error)
+        }
     }
 
     const handleCancel = () => {
@@ -89,6 +105,19 @@ export default function ProductMaintenance() {
             unit_of_measure: ""
         })
         setEditingProduct(null)
+    }
+
+    if (loading) {
+        return (
+            <>
+                <PageHeader>
+                    <PageHeaderHeading>Product Maintenance</PageHeaderHeading>
+                </PageHeader>
+                <div className="flex items-center justify-center h-64">
+                    <p className="text-muted-foreground">Loading products...</p>
+                </div>
+            </>
+        )
     }
 
     return (

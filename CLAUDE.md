@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **shadcn/ui** - UI component library built on Radix UI primitives
 - **Tailwind CSS v4** - Styling with `@tailwindcss/vite` plugin
 - **React Router v7** - Client-side routing
+- **MSW (Mock Service Worker)** - API mocking for development
 
 ## MCP Servers
 
@@ -58,12 +59,24 @@ This project is configured with the shadcn/ui MCP server for adding components:
 - `src/components/ui/` - shadcn/ui primitives (button, card, etc.)
 - `src/components/` - App-specific components (header, sidebar, etc.)
 - `src/pages/` - Route components
+- `src/types/` - TypeScript type definitions
+- `src/services/api/` - API service layer for data fetching
+- `src/mocks/` - MSW mock API setup and mock data
 - Path alias `@/*` maps to `src/*` (configured in vite.config.ts and tsconfig.json)
+
+### Mock API System
+- **MSW (Mock Service Worker)** provides centralized API mocking
+- All mock data centralized in `src/mocks/data/`
+- API handlers defined in `src/mocks/handlers.ts`
+- Service layer in `src/services/api/` provides typed API client functions
+- Toggle mocking via `VITE_USE_MOCK_API` environment variable
+- See `docs/QUICK_START.md` to get started or `docs/MOCK_API_SETUP.md` for detailed documentation
 
 ### Environment Variables
 - `VITE_BASE_URL` - Base URL for deployment (default: "/")
 - `VITE_USE_HASH_ROUTE` - Enable hash routing (default: false)
 - `VITE_APP_NAME` - Application name (default: "UI Builder")
+- `VITE_USE_MOCK_API` - Enable MSW mock API (default: true for development)
 
 ## GitHub Pages Setup
 The repository includes a GitHub Actions workflow (`.github/workflows/build-and-deploy.yml`) for deploying to gh-pages branch. Currently set to manual trigger (`workflow_dispatch`). To enable auto-deploy on push to main, uncomment the push trigger in the workflow file.
