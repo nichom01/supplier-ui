@@ -18,17 +18,16 @@ export default function Checkout() {
     const [customers, setCustomers] = useState<Customer[]>([])
     const [selectedCustomerId, setSelectedCustomerId] = useState<string>('')
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
-    const [shippingMethod, setShippingMethod] = useState('standard')
-    const [paymentTerms, setPaymentTerms] = useState('net-30')
+    const [shippingMethod, setShippingMethod] = useState('collection')
+    const [paymentTerms, setPaymentTerms] = useState('prepaid')
     const [requestedDeliveryDate, setRequestedDeliveryDate] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         loadCustomers()
-        // Set default delivery date to 7 days from now
+        // Set default delivery date to today
         const defaultDate = new Date()
-        defaultDate.setDate(defaultDate.getDate() + 7)
         setRequestedDeliveryDate(defaultDate.toISOString().split('T')[0])
     }, [])
 
@@ -73,6 +72,7 @@ export default function Checkout() {
             }
 
             const shippingMethodMap: Record<string, string> = {
+                'collection': 'Collection',
                 'standard': 'Standard Ground',
                 'express': 'Express',
                 'overnight': 'Overnight'
@@ -222,19 +222,14 @@ export default function Checkout() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="delivery-date">Requested Delivery Date</Label>
-                                <Input
-                                    id="delivery-date"
-                                    type="date"
-                                    value={requestedDeliveryDate}
-                                    onChange={(e) => setRequestedDeliveryDate(e.target.value)}
-                                    min={new Date().toISOString().split('T')[0]}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
                                 <Label>Shipping Method</Label>
                                 <RadioGroup value={shippingMethod} onValueChange={setShippingMethod}>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="collection" id="collection" />
+                                        <Label htmlFor="collection" className="font-normal cursor-pointer flex-1">
+                                            Collection
+                                        </Label>
+                                    </div>
                                     <div className="flex items-center space-x-2">
                                         <RadioGroupItem value="standard" id="standard" />
                                         <Label htmlFor="standard" className="font-normal cursor-pointer flex-1">
@@ -255,6 +250,17 @@ export default function Checkout() {
                                     </div>
                                 </RadioGroup>
                             </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="delivery-date">Requested Delivery Date</Label>
+                                <Input
+                                    id="delivery-date"
+                                    type="date"
+                                    value={requestedDeliveryDate}
+                                    onChange={(e) => setRequestedDeliveryDate(e.target.value)}
+                                    min={new Date().toISOString().split('T')[0]}
+                                />
+                            </div>
                         </CardContent>
                     </Card>
 
@@ -265,6 +271,12 @@ export default function Checkout() {
                         </CardHeader>
                         <CardContent>
                             <RadioGroup value={paymentTerms} onValueChange={setPaymentTerms}>
+                                <div className="flex items-center space-x-2">
+                                    <RadioGroupItem value="prepaid" id="prepaid" />
+                                    <Label htmlFor="prepaid" className="font-normal cursor-pointer flex-1">
+                                        Prepaid
+                                    </Label>
+                                </div>
                                 <div className="flex items-center space-x-2">
                                     <RadioGroupItem value="net-30" id="net-30" />
                                     <Label htmlFor="net-30" className="font-normal cursor-pointer flex-1">
@@ -281,12 +293,6 @@ export default function Checkout() {
                                     <RadioGroupItem value="cod" id="cod" />
                                     <Label htmlFor="cod" className="font-normal cursor-pointer flex-1">
                                         Cash on Delivery
-                                    </Label>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <RadioGroupItem value="prepaid" id="prepaid" />
-                                    <Label htmlFor="prepaid" className="font-normal cursor-pointer flex-1">
-                                        Prepaid
                                     </Label>
                                 </div>
                             </RadioGroup>
