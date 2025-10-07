@@ -60,5 +60,34 @@ export const basketApi = {
         })
         if (!response.ok) throw new Error('Failed to clear basket')
         return response.json()
+    },
+
+    // Update line item discount
+    updateLineDiscount: async (
+        product_id: number,
+        discount_type?: 'percentage' | 'fixed',
+        discount_value?: number
+    ): Promise<Basket> => {
+        const response = await fetch(`${API_BASE}/basket/${product_id}/discount`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ discount_type, discount_value })
+        })
+        if (!response.ok) throw new Error('Failed to update line discount')
+        return response.json()
+    },
+
+    // Update order-level discount
+    updateOrderDiscount: async (
+        discount_type?: 'percentage' | 'fixed',
+        discount_value?: number
+    ): Promise<Basket> => {
+        const response = await fetch(`${API_BASE}/basket/discount`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ discount_type, discount_value })
+        })
+        if (!response.ok) throw new Error('Failed to update order discount')
+        return response.json()
     }
 }

@@ -277,9 +277,40 @@ export default function OrderConfirmation() {
                                                 <p className="text-sm text-muted-foreground">
                                                     {formatCurrency(line.unit_price)} {isHire ? 'per day' : 'each'}
                                                 </p>
-                                                <p className="font-semibold">
-                                                    {formatCurrency(line.unit_price * line.quantity_ordered)}
-                                                </p>
+                                                {(() => {
+                                                    const subtotal = line.unit_price * line.quantity_ordered
+                                                    let lineTotal = subtotal
+
+                                                    if (line.discount_type && line.discount_value) {
+                                                        if (line.discount_type === 'percentage') {
+                                                            lineTotal = subtotal * (1 - line.discount_value / 100)
+                                                        } else {
+                                                            lineTotal = Math.max(0, subtotal - line.discount_value)
+                                                        }
+
+                                                        return (
+                                                            <>
+                                                                <p className="text-xs text-muted-foreground line-through">
+                                                                    {formatCurrency(subtotal)}
+                                                                </p>
+                                                                <p className="text-xs text-green-600 dark:text-green-400">
+                                                                    {line.discount_type === 'percentage'
+                                                                        ? `${line.discount_value}% off`
+                                                                        : `£${line.discount_value} off`}
+                                                                </p>
+                                                                <p className="font-semibold text-green-600 dark:text-green-400">
+                                                                    {formatCurrency(lineTotal)}
+                                                                </p>
+                                                            </>
+                                                        )
+                                                    }
+
+                                                    return (
+                                                        <p className="font-semibold">
+                                                            {formatCurrency(subtotal)}
+                                                        </p>
+                                                    )
+                                                })()}
                                             </div>
                                         </div>
                                     )
@@ -297,12 +328,51 @@ export default function OrderConfirmation() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">
-                                        Items ({order.lines.reduce((sum, line) => sum + line.quantity_ordered, 0)})
-                                    </span>
-                                    <span>{formatCurrency(order.total_amount)}</span>
-                                </div>
+                                {(() => {
+                                    // Calculate subtotal with line discounts
+                                    const subtotal = order.lines.reduce((sum, line) => {
+                                        const lineSubtotal = line.unit_price * line.quantity_ordered
+                                        let lineTotal = lineSubtotal
+
+                                        if (line.discount_type && line.discount_value) {
+                                            if (line.discount_type === 'percentage') {
+                                                lineTotal = lineSubtotal * (1 - line.discount_value / 100)
+                                            } else {
+                                                lineTotal = Math.max(0, lineSubtotal - line.discount_value)
+                                            }
+                                        }
+
+                                        return sum + lineTotal
+                                    }, 0)
+
+                                    const hasOrderDiscount = order.order_discount_type && order.order_discount_value
+
+                                    return (
+                                        <>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">
+                                                    Subtotal ({order.lines.reduce((sum, line) => sum + line.quantity_ordered, 0)} items)
+                                                </span>
+                                                <span>{formatCurrency(subtotal)}</span>
+                                            </div>
+
+                                            {hasOrderDiscount && (
+                                                <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                                                    <span>
+                                                        Order Discount ({order.order_discount_type === 'percentage'
+                                                            ? `${order.order_discount_value}%`
+                                                            : formatCurrency(order.order_discount_value!)})
+                                                    </span>
+                                                    <span>
+                                                        -{order.order_discount_type === 'percentage'
+                                                            ? formatCurrency(subtotal * (order.order_discount_value! / 100))
+                                                            : formatCurrency(order.order_discount_value!)}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </>
+                                    )
+                                })()}
                             </div>
 
                             <div className="border-t pt-4">

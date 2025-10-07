@@ -91,6 +91,8 @@ export type SalesOrder = {
     payment_terms: string
     shipping_method: string
     warehouse_id: number
+    order_discount_type?: 'percentage' | 'fixed'  // Order-level discount type
+    order_discount_value?: number  // Order-level discount amount
 }
 
 export type SalesOrderLine = {
@@ -106,6 +108,8 @@ export type SalesOrderLine = {
     asset_id?: number  // For hire products, links to specific asset
     hire_start_date?: string  // For hire products, start date of rental
     hire_end_date?: string  // For hire products, end date of rental
+    discount_type?: 'percentage' | 'fixed'  // Line-level discount type
+    discount_value?: number  // Line-level discount amount
 }
 
 // Asset types (for hire products)
@@ -133,11 +137,15 @@ export type BasketItem = {
     hire_start_date?: string  // For hire products
     hire_end_date?: string  // For hire products
     asset_id?: number  // For hire products, selected asset
+    discount_type?: 'percentage' | 'fixed'  // Type of discount
+    discount_value?: number  // Discount amount (percentage or fixed value)
 }
 
 export type Basket = {
     items: BasketItem[]
     total: number
+    order_discount_type?: 'percentage' | 'fixed'  // Order-level discount type
+    order_discount_value?: number  // Order-level discount amount
 }
 
 // Sales Order API Response types

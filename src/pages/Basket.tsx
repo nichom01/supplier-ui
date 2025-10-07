@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ArrowLeft, ShoppingCart, Trash2, Plus, Minus } from 'lucide-react'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, getProductImageUrl } from '@/lib/utils'
+import DiscountControl from '@/components/DiscountControl'
 
 export default function Cart() {
     const navigate = useNavigate()
-    const { basket, isLoading, updateQuantity, removeItem, clearBasket } = useBasket()
+    const { basket, isLoading, updateQuantity, removeItem, clearBasket, updateLineDiscount, updateOrderDiscount } = useBasket()
 
     const handleQuantityChange = async (productId: number, newQuantity: number) => {
         try {
@@ -38,6 +39,29 @@ export default function Cart() {
 
     const handleCheckout = () => {
         navigate('/checkout')
+    }
+
+    const calculateLinePrice = (item: typeof basket.items[0]) => {
+        const unitPrice = item.product.product_type === 'hire'
+            ? (item.product.daily_hire_rate || 0)
+            : (item.product.price || 0)
+        const subtotal = unitPrice * item.quantity
+
+        if (item.discount_type && item.discount_value) {
+            if (item.discount_type === 'percentage') {
+                return {
+                    original: subtotal,
+                    discounted: subtotal * (1 - item.discount_value / 100)
+                }
+            } else {
+                return {
+                    original: subtotal,
+                    discounted: Math.max(0, subtotal - item.discount_value)
+                }
+            }
+        }
+
+        return { original: subtotal, discounted: subtotal }
     }
 
     if (isLoading && basket.items.length === 0) {
@@ -82,11 +106,13 @@ export default function Cart() {
                             <Card key={item.product.product_id}>
                                 <CardContent className="p-6">
                                     <div className="flex gap-4">
-                                        {/* Product Image Placeholder */}
-                                        <div className="w-24 h-24 bg-muted rounded flex items-center justify-center flex-shrink-0">
-                                            <span className="text-muted-foreground text-2xl">
-                                                {item.product.name.charAt(0)}
-                                            </span>
+                                        {/* Product Image */}
+                                        <div className="w-24 h-24 bg-background rounded overflow-hidden flex-shrink-0">
+                                            <img
+                                                src={getProductImageUrl(item.product.image)}
+                                                alt={item.product.name}
+                                                className="w-full h-full object-contain"
+                                            />
                                         </div>
 
                                         {/* Product Details */}
@@ -184,26 +210,46 @@ export default function Cart() {
                                                 )}
 
                                                 <div className="text-right">
-                                                    {item.product.product_type === 'hire' ? (
-                                                        <>
-                                                            <div className="text-sm text-muted-foreground">
-                                                                {formatCurrency(item.product.daily_hire_rate)} per day
-                                                            </div>
-                                                            <div className="text-lg font-semibold">
-                                                                {formatCurrency((item.product.daily_hire_rate || 0) * item.quantity)}
-                                                            </div>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <div className="text-sm text-muted-foreground">
-                                                                {formatCurrency(item.product.price)} each
-                                                            </div>
-                                                            <div className="text-lg font-semibold">
-                                                                {formatCurrency((item.product.price || 0) * item.quantity)}
-                                                            </div>
-                                                        </>
-                                                    )}
+                                                    {(() => {
+                                                        const { original, discounted } = calculateLinePrice(item)
+                                                        const unitPrice = item.product.product_type === 'hire'
+                                                            ? item.product.daily_hire_rate
+                                                            : item.product.price
+                                                        const hasDiscount = original !== discounted
+
+                                                        return (
+                                                            <>
+                                                                <div className="text-sm text-muted-foreground">
+                                                                    {formatCurrency(unitPrice)} {item.product.product_type === 'hire' ? 'per day' : 'each'}
+                                                                </div>
+                                                                {hasDiscount ? (
+                                                                    <>
+                                                                        <div className="text-sm text-muted-foreground line-through">
+                                                                            {formatCurrency(original)}
+                                                                        </div>
+                                                                        <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                                                                            {formatCurrency(discounted)}
+                                                                        </div>
+                                                                    </>
+                                                                ) : (
+                                                                    <div className="text-lg font-semibold">
+                                                                        {formatCurrency(original)}
+                                                                    </div>
+                                                                )}
+                                                            </>
+                                                        )
+                                                    })()}
                                                 </div>
+                                            </div>
+
+                                            {/* Discount Control */}
+                                            <div className="mt-2 pt-2 border-t">
+                                                <DiscountControl
+                                                    currentType={item.discount_type}
+                                                    currentValue={item.discount_value}
+                                                    onApply={(type, value) => updateLineDiscount(item.product.product_id!, type, value)}
+                                                    label="Line Discount"
+                                                />
                                             </div>
                                         </div>
                                     </div>
@@ -220,23 +266,95 @@ export default function Cart() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">
-                                            Items ({basket.items.reduce((sum, item) => sum + item.quantity, 0)})
-                                        </span>
-                                        <span>{formatCurrency(basket.total)}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">Shipping</span>
-                                        <span>Calculated at checkout</span>
-                                    </div>
+                                    {(() => {
+                                        // Calculate subtotal with line discounts
+                                        const subtotal = basket.items.reduce((sum, item) => {
+                                            const { discounted } = calculateLinePrice(item)
+                                            return sum + discounted
+                                        }, 0)
+
+                                        const hasOrderDiscount = basket.order_discount_type && basket.order_discount_value
+
+                                        // Calculate order discount amount
+                                        let orderDiscountAmount = 0
+                                        if (hasOrderDiscount) {
+                                            if (basket.order_discount_type === 'percentage') {
+                                                orderDiscountAmount = subtotal * (basket.order_discount_value! / 100)
+                                            } else {
+                                                orderDiscountAmount = basket.order_discount_value!
+                                            }
+                                        }
+
+                                        // Calculate final total
+                                        const finalTotal = Math.max(0, subtotal - orderDiscountAmount)
+
+                                        return (
+                                            <>
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-muted-foreground">
+                                                        Subtotal ({basket.items.reduce((sum, item) => sum + item.quantity, 0)} items)
+                                                    </span>
+                                                    <span>{formatCurrency(subtotal)}</span>
+                                                </div>
+
+                                                {/* Order Discount Section */}
+                                                <div className="py-2">
+                                                    <DiscountControl
+                                                        currentType={basket.order_discount_type}
+                                                        currentValue={basket.order_discount_value}
+                                                        onApply={(type, value) => updateOrderDiscount(type, value)}
+                                                        label="Order Discount"
+                                                    />
+                                                </div>
+
+                                                {hasOrderDiscount && (
+                                                    <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                                                        <span>
+                                                            Order Discount ({basket.order_discount_type === 'percentage'
+                                                                ? `${basket.order_discount_value}%`
+                                                                : formatCurrency(basket.order_discount_value!)})
+                                                        </span>
+                                                        <span>
+                                                            -{formatCurrency(orderDiscountAmount)}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-muted-foreground">Shipping</span>
+                                                    <span>Calculated at checkout</span>
+                                                </div>
+                                            </>
+                                        )
+                                    })()}
                                 </div>
 
                                 <div className="border-t pt-4">
-                                    <div className="flex justify-between text-lg font-semibold">
-                                        <span>Total</span>
-                                        <span>{formatCurrency(basket.total)}</span>
-                                    </div>
+                                    {(() => {
+                                        // Recalculate to ensure consistency
+                                        const subtotal = basket.items.reduce((sum, item) => {
+                                            const { discounted } = calculateLinePrice(item)
+                                            return sum + discounted
+                                        }, 0)
+
+                                        let orderDiscountAmount = 0
+                                        if (basket.order_discount_type && basket.order_discount_value) {
+                                            if (basket.order_discount_type === 'percentage') {
+                                                orderDiscountAmount = subtotal * (basket.order_discount_value / 100)
+                                            } else {
+                                                orderDiscountAmount = basket.order_discount_value
+                                            }
+                                        }
+
+                                        const finalTotal = Math.max(0, subtotal - orderDiscountAmount)
+
+                                        return (
+                                            <div className="flex justify-between text-lg font-semibold">
+                                                <span>Total</span>
+                                                <span>{formatCurrency(finalTotal)}</span>
+                                            </div>
+                                        )
+                                    })()}
                                 </div>
                             </CardContent>
                             <CardFooter>

@@ -11,6 +11,8 @@ type BasketContextType = {
     removeItem: (product_id: number) => Promise<void>
     clearBasket: () => Promise<void>
     refreshBasket: () => Promise<void>
+    updateLineDiscount: (product_id: number, discount_type?: 'percentage' | 'fixed', discount_value?: number) => Promise<void>
+    updateOrderDiscount: (discount_type?: 'percentage' | 'fixed', discount_value?: number) => Promise<void>
 }
 
 const BasketContext = createContext<BasketContextType | undefined>(undefined)
@@ -100,6 +102,37 @@ export function BasketProvider({ children }: { children: ReactNode }) {
         }
     }
 
+    const updateLineDiscount = async (product_id: number, discount_type?: 'percentage' | 'fixed', discount_value?: number) => {
+        try {
+            setIsLoading(true)
+            setError(null)
+            const data = await basketApi.updateLineDiscount(product_id, discount_type, discount_value)
+            setBasket(data)
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to update discount')
+            throw err
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const updateOrderDiscount = async (discount_type?: 'percentage' | 'fixed', discount_value?: number) => {
+        try {
+            setIsLoading(true)
+            setError(null)
+            console.log('Updating order discount:', { discount_type, discount_value })
+            const data = await basketApi.updateOrderDiscount(discount_type, discount_value)
+            console.log('Order discount response:', data)
+            setBasket(data)
+        } catch (err) {
+            console.error('Error updating order discount:', err)
+            setError(err instanceof Error ? err.message : 'Failed to update order discount')
+            throw err
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
     return (
         <BasketContext.Provider
             value={{
@@ -110,7 +143,9 @@ export function BasketProvider({ children }: { children: ReactNode }) {
                 updateQuantity,
                 removeItem,
                 clearBasket,
-                refreshBasket
+                refreshBasket,
+                updateLineDiscount,
+                updateOrderDiscount
             }}
         >
             {children}

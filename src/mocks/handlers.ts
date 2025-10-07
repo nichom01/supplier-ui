@@ -27,6 +27,7 @@ let poLineItems = [...mockPOLineItems]
 
 // In-memory storage for shopping basket (session-based, would typically use cookies/sessions)
 let basket: BasketItem[] = []
+let basketOrderDiscount: { type?: 'percentage' | 'fixed', value?: number } = {}
 
 // In-memory storage for assets
 let assets = [...mockAssets]
@@ -283,14 +284,42 @@ export const handlers = [
     // Get basket
     http.get('/api/basket', async () => {
         await delay(200)
-        const total = basket.reduce((sum, item) => {
-            if (item.product.product_type === 'hire') {
-                return sum + (item.product.daily_hire_rate || 0) * item.quantity
-            } else {
-                return sum + (item.product.price || 0) * item.quantity
+
+        // Calculate subtotal with line discounts
+        const subtotal = basket.reduce((sum, item) => {
+            const unitPrice = item.product.product_type === 'hire'
+                ? (item.product.daily_hire_rate || 0)
+                : (item.product.price || 0)
+            let lineTotal = unitPrice * item.quantity
+
+            // Apply line discount
+            if (item.discount_type && item.discount_value) {
+                if (item.discount_type === 'percentage') {
+                    lineTotal = lineTotal * (1 - item.discount_value / 100)
+                } else {
+                    lineTotal = lineTotal - item.discount_value
+                }
             }
+
+            return sum + Math.max(0, lineTotal)
         }, 0)
-        return HttpResponse.json({ items: basket, total })
+
+        // Apply order-level discount
+        let total = subtotal
+        if (basketOrderDiscount.type && basketOrderDiscount.value) {
+            if (basketOrderDiscount.type === 'percentage') {
+                total = total * (1 - basketOrderDiscount.value / 100)
+            } else {
+                total = total - basketOrderDiscount.value
+            }
+        }
+
+        return HttpResponse.json({
+            items: basket,
+            total: Math.max(0, total),
+            order_discount_type: basketOrderDiscount.type,
+            order_discount_value: basketOrderDiscount.value
+        })
     }),
 
     // Add to basket
@@ -389,6 +418,111 @@ export const handlers = [
         return HttpResponse.json({ items: basket, total })
     }),
 
+    // Update order-level discount (must come before :productId routes)
+    http.put('/api/basket/discount', async ({ request }) => {
+        await delay(300)
+        const { discount_type, discount_value } = await request.json() as {
+            discount_type?: 'percentage' | 'fixed'
+            discount_value?: number
+        }
+
+        basketOrderDiscount = {
+            type: discount_type,
+            value: discount_value
+        }
+
+        // Recalculate total
+        const subtotal = basket.reduce((sum, item) => {
+            const unitPrice = item.product.product_type === 'hire'
+                ? (item.product.daily_hire_rate || 0)
+                : (item.product.price || 0)
+            let lineTotal = unitPrice * item.quantity
+
+            if (item.discount_type && item.discount_value) {
+                if (item.discount_type === 'percentage') {
+                    lineTotal = lineTotal * (1 - item.discount_value / 100)
+                } else {
+                    lineTotal = lineTotal - item.discount_value
+                }
+            }
+
+            return sum + Math.max(0, lineTotal)
+        }, 0)
+
+        let total = subtotal
+        if (discount_type && discount_value) {
+            if (discount_type === 'percentage') {
+                total = total * (1 - discount_value / 100)
+            } else {
+                total = total - discount_value
+            }
+        }
+
+        return HttpResponse.json({
+            items: basket,
+            total: Math.max(0, total),
+            order_discount_type: discount_type,
+            order_discount_value: discount_value
+        })
+    }),
+
+    // Update line item discount (must come before :productId routes)
+    http.put('/api/basket/:productId/discount', async ({ params, request }) => {
+        await delay(300)
+        const { productId } = params
+        const { discount_type, discount_value } = await request.json() as {
+            discount_type?: 'percentage' | 'fixed'
+            discount_value?: number
+        }
+
+        const itemIndex = basket.findIndex(item => item.product.product_id === Number(productId))
+
+        if (itemIndex === -1) {
+            return new HttpResponse(null, { status: 404 })
+        }
+
+        // Update discount
+        basket[itemIndex] = {
+            ...basket[itemIndex],
+            discount_type,
+            discount_value
+        }
+
+        // Recalculate total
+        const subtotal = basket.reduce((sum, item) => {
+            const unitPrice = item.product.product_type === 'hire'
+                ? (item.product.daily_hire_rate || 0)
+                : (item.product.price || 0)
+            let lineTotal = unitPrice * item.quantity
+
+            if (item.discount_type && item.discount_value) {
+                if (item.discount_type === 'percentage') {
+                    lineTotal = lineTotal * (1 - item.discount_value / 100)
+                } else {
+                    lineTotal = lineTotal - item.discount_value
+                }
+            }
+
+            return sum + Math.max(0, lineTotal)
+        }, 0)
+
+        let total = subtotal
+        if (basketOrderDiscount.type && basketOrderDiscount.value) {
+            if (basketOrderDiscount.type === 'percentage') {
+                total = total * (1 - basketOrderDiscount.value / 100)
+            } else {
+                total = total - basketOrderDiscount.value
+            }
+        }
+
+        return HttpResponse.json({
+            items: basket,
+            total: Math.max(0, total),
+            order_discount_type: basketOrderDiscount.type,
+            order_discount_value: basketOrderDiscount.value
+        })
+    }),
+
     // Update basket item
     http.put('/api/basket/:productId', async ({ params, request }) => {
         await delay(300)
@@ -444,6 +578,7 @@ export const handlers = [
     http.delete('/api/basket', async () => {
         await delay(200)
         basket = []
+        basketOrderDiscount = {}
         return HttpResponse.json({ items: [], total: 0 })
     }),
 
@@ -487,14 +622,34 @@ export const handlers = [
         // Create order
         const newOrderId = Math.max(0, ...salesOrders.map(o => o.sales_order_id || 0)) + 1
 
-        // Calculate total considering both sale and hire products
-        const total = basket.reduce((sum, item) => {
-            if (item.product.product_type === 'hire') {
-                return sum + (item.product.daily_hire_rate || 0) * item.quantity
-            } else {
-                return sum + (item.product.price || 0) * item.quantity
+        // Calculate total with line discounts
+        const subtotal = basket.reduce((sum, item) => {
+            const unitPrice = item.product.product_type === 'hire'
+                ? (item.product.daily_hire_rate || 0)
+                : (item.product.price || 0)
+            let lineTotal = unitPrice * item.quantity
+
+            // Apply line discount
+            if (item.discount_type && item.discount_value) {
+                if (item.discount_type === 'percentage') {
+                    lineTotal = lineTotal * (1 - item.discount_value / 100)
+                } else {
+                    lineTotal = lineTotal - item.discount_value
+                }
             }
+
+            return sum + Math.max(0, lineTotal)
         }, 0)
+
+        // Apply order-level discount
+        let total = subtotal
+        if (basketOrderDiscount.type && basketOrderDiscount.value) {
+            if (basketOrderDiscount.type === 'percentage') {
+                total = total * (1 - basketOrderDiscount.value / 100)
+            } else {
+                total = total - basketOrderDiscount.value
+            }
+        }
 
         const newOrder: SalesOrder = {
             sales_order_id: newOrderId,
@@ -502,10 +657,12 @@ export const handlers = [
             order_date: new Date().toISOString(),
             requested_delivery_date,
             status: 'pending',
-            total_amount: total,
+            total_amount: Math.max(0, total),
             payment_terms,
             shipping_method,
-            warehouse_id
+            warehouse_id,
+            order_discount_type: basketOrderDiscount.type,
+            order_discount_value: basketOrderDiscount.value
         }
 
         salesOrders.push(newOrder)
@@ -525,13 +682,16 @@ export const handlers = [
             line_type: item.product.product_type,
             asset_id: item.asset_id,
             hire_start_date: item.hire_start_date,
-            hire_end_date: item.hire_end_date
+            hire_end_date: item.hire_end_date,
+            discount_type: item.discount_type,
+            discount_value: item.discount_value
         }))
 
         salesOrderLines.push(...newLines)
 
-        // Clear basket
+        // Clear basket and discounts
         basket = []
+        basketOrderDiscount = {}
 
         return HttpResponse.json({ ...newOrder, lines: newLines }, { status: 201 })
     }),
