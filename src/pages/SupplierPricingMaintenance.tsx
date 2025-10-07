@@ -181,18 +181,17 @@ export default function SupplierPricingMaintenance() {
             return
         }
 
-        // Create CSV content
-        const headers = ['Supplier ID', 'Supplier Name', 'Product ID', 'SKU', 'Product Name', 'Product Type', 'Price', 'Daily Hire Rate', 'Effective From']
+        // Create CSV content - SKU is the key field for identifying products
+        const headers = ['SKU', 'Product Name', 'Product Type', 'Price', 'Daily Hire Rate', 'Effective From', 'Supplier ID', 'Supplier Name']
         const rows = filteredPricing.map(p => [
-            p.supplier_id,
-            p.supplier_name,
-            p.product_id,
             p.sku,
             p.product_name,
             p.product_type,
             p.price || '',
             p.daily_hire_rate || '',
-            p.effective_from
+            p.effective_from,
+            p.supplier_id,
+            p.supplier_name
         ])
 
         const csvContent = [
@@ -282,19 +281,19 @@ export default function SupplierPricingMaintenance() {
             const updates: SupplierPricingUpdateRequest[] = []
             const errors: string[] = []
 
-            // Expected headers
-            const expectedHeaders = ['Supplier ID', 'Supplier Name', 'Product ID', 'SKU', 'Product Name', 'Product Type', 'Price', 'Daily Hire Rate', 'Effective From']
-            const headerCheck = expectedHeaders.every(h => headers.includes(h))
+            // Expected headers - SKU is now the primary identifier instead of Product ID
+            const requiredHeaders = ['SKU', 'Product Type', 'Supplier ID']
+            const missingHeaders = requiredHeaders.filter(h => !headers.includes(h))
 
-            if (!headerCheck) {
-                toast.error('CSV headers do not match expected format')
-                setUploadErrors([`Expected headers: ${expectedHeaders.join(', ')}`])
+            if (missingHeaders.length > 0) {
+                toast.error('CSV is missing required headers')
+                setUploadErrors([`Missing required headers: ${missingHeaders.join(', ')}`])
                 return
             }
 
             // Get column indices
             const supplierIdIdx = headers.indexOf('Supplier ID')
-            const productIdIdx = headers.indexOf('Product ID')
+            const skuIdx = headers.indexOf('SKU')
             const productTypeIdx = headers.indexOf('Product Type')
             const priceIdx = headers.indexOf('Price')
             const dailyHireRateIdx = headers.indexOf('Daily Hire Rate')
@@ -311,7 +310,7 @@ export default function SupplierPricingMaintenance() {
                 }
 
                 const supplierId = parseInt(cells[supplierIdIdx])
-                const productId = parseInt(cells[productIdIdx])
+                const sku = cells[skuIdx]
                 const productType = cells[productTypeIdx]
                 const priceStr = cells[priceIdx]
                 const dailyHireRateStr = cells[dailyHireRateIdx]
@@ -322,14 +321,14 @@ export default function SupplierPricingMaintenance() {
                     continue
                 }
 
-                if (isNaN(productId)) {
-                    errors.push(`Row ${i + 1}: Invalid Product ID`)
+                if (!sku || sku.trim() === '') {
+                    errors.push(`Row ${i + 1}: SKU is required`)
                     continue
                 }
 
                 const update: SupplierPricingUpdateRequest = {
                     supplier_id: supplierId,
-                    product_id: productId,
+                    sku: sku.trim(),
                     effective_from: effectiveFrom || new Date().toISOString().split('T')[0]
                 }
 
@@ -412,7 +411,7 @@ export default function SupplierPricingMaintenance() {
                 <CardHeader>
                     <CardTitle>Manage Supplier Pricing</CardTitle>
                     <CardDescription>
-                        Update supplier pricing individually or bulk upload via CSV spreadsheet. Filter by supplier to download pricing for a specific supplier.
+                        Update supplier pricing individually or bulk upload via CSV spreadsheet. Use SKU to identify products when uploading. Filter by supplier to download pricing for a specific supplier.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

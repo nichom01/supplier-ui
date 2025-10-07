@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { Supplier, Product, POLineItem } from '@/types'
+import { Supplier, Product, POLineItem, SupplierPricing } from '@/types'
 import { suppliersApi, productsApi, purchaseOrdersApi, supplierPricingApi } from '@/services/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,6 +20,7 @@ export default function CreatePurchaseOrder() {
     const navigate = useNavigate()
     const [suppliers, setSuppliers] = useState<Supplier[]>([])
     const [products, setProducts] = useState<Product[]>([])
+    const [supplierPricing, setSupplierPricing] = useState<SupplierPricing[]>([])
     const [selectedSupplierId, setSelectedSupplierId] = useState<string>('')
     const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null)
     const [deliveryDate, setDeliveryDate] = useState('')
@@ -46,9 +47,12 @@ export default function CreatePurchaseOrder() {
                 setSelectedSupplier(supplier)
                 // Clear basket when changing supplier
                 setBasket([])
+                // Load pricing for this supplier
+                loadSupplierPricing(Number(selectedSupplierId))
             }
         } else {
             setSelectedSupplier(null)
+            setSupplierPricing([])
         }
     }, [selectedSupplierId, suppliers])
 
@@ -84,6 +88,16 @@ export default function CreatePurchaseOrder() {
         }
     }
 
+    const loadSupplierPricing = async (supplierId: number) => {
+        try {
+            const pricing = await supplierPricingApi.getSupplierPricingBySupplier(supplierId)
+            setSupplierPricing(pricing)
+        } catch (err) {
+            console.error('Failed to load supplier pricing:', err)
+            setSupplierPricing([])
+        }
+    }
+
     const loadSupplierPrice = async (supplierId: number, productId: number) => {
         try {
             const pricing = await supplierPricingApi.getSupplierPricingBySupplier(supplierId)
@@ -103,10 +117,11 @@ export default function CreatePurchaseOrder() {
     }
 
     const getAvailableProducts = () => {
-        if (!selectedSupplierId) return []
-        // In a real app, you'd filter by supplier_id from a product-supplier relationship table
-        // For now, return all products (this should be enhanced based on your data model)
-        return products
+        if (!selectedSupplierId || supplierPricing.length === 0) return []
+
+        // Only show products that have pricing for this supplier
+        const availableProductIds = supplierPricing.map(p => p.product_id)
+        return products.filter(p => availableProductIds.includes(p.product_id))
     }
 
     const addToBasket = () => {

@@ -243,7 +243,8 @@ export type SupplierPricing = {
 
 export type SupplierPricingUpdateRequest = {
     supplier_id: number
-    product_id: number
+    product_id?: number  // Optional - can use SKU instead
+    sku?: string  // Optional - can use product_id instead
     price?: number
     daily_hire_rate?: number
     effective_from: string

@@ -933,20 +933,30 @@ export const handlers = [
         const errors: string[] = []
 
         for (const update of updates) {
+            // Find supplier
+            const supplier = suppliers.find(s => s.supplier_id === update.supplier_id)
+            if (!supplier) {
+                errors.push(`Supplier ID ${update.supplier_id} not found`)
+                continue
+            }
+
+            // Find product by ID or SKU
+            let product = update.product_id
+                ? products.find(p => p.product_id === update.product_id)
+                : products.find(p => p.sku === update.sku)
+
+            if (!product) {
+                const identifier = update.sku || `Product ID ${update.product_id}`
+                errors.push(`Product ${identifier} not found`)
+                continue
+            }
+
             // Find the current active pricing (one without effective_to date)
             const index = supplierPricing.findIndex(
                 p => p.supplier_id === update.supplier_id &&
-                     p.product_id === update.product_id &&
+                     p.product_id === product!.product_id &&
                      !p.effective_to
             )
-
-            const supplier = suppliers.find(s => s.supplier_id === update.supplier_id)
-            const product = products.find(p => p.product_id === update.product_id)
-
-            if (!supplier || !product) {
-                errors.push(`Supplier ID ${update.supplier_id} or Product ID ${update.product_id} not found`)
-                continue
-            }
 
             // If active pricing exists, archive it
             if (index !== -1) {
@@ -958,7 +968,7 @@ export const handlers = [
                 supplier_pricing_id: Math.max(...supplierPricing.map(p => p.supplier_pricing_id || 0)) + 1,
                 supplier_id: update.supplier_id,
                 supplier_name: supplier.name,
-                product_id: update.product_id,
+                product_id: product.product_id!,
                 sku: product.sku,
                 product_name: product.name,
                 product_type: product.product_type,
