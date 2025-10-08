@@ -20,14 +20,35 @@ export function formatCurrency(value: number | undefined): string {
   return formatter.format(value)
 }
 
-export function getProductImageUrl(imagePath?: string): string {
+export function getProductImageUrl(sku?: string, imageIndex?: number): string {
   // Import the no-image placeholder
   const noImageUrl = '/src/assets/images/products/no-image.svg'
 
-  if (!imagePath) {
+  if (!sku) {
     return noImageUrl
   }
 
-  // Return the path to the image - Vite will handle it
-  return `/src/assets/images/products/${imagePath}`
+  // Build image path using SKU convention
+  // Main image: SKU.jpg (e.g., ELEC-001.jpg)
+  // Sub-images: SKU-N.jpg (e.g., ELEC-001-1.jpg, ELEC-001-2.jpg)
+  const imageName = imageIndex ? `${sku}-${imageIndex}` : sku
+
+  // Try common image extensions - browsers will display the first one that exists
+  // For now, default to .jpg but the actual file could be .jpg, .png, .webp, etc.
+  return `/src/assets/images/products/${imageName}.jpg`
+}
+
+export function getProductImageUrls(sku?: string, maxImages: number = 5): string[] {
+  if (!sku) {
+    return [getProductImageUrl()]
+  }
+
+  const urls: string[] = [getProductImageUrl(sku)]
+
+  // Add potential sub-images
+  for (let i = 1; i <= maxImages; i++) {
+    urls.push(getProductImageUrl(sku, i))
+  }
+
+  return urls
 }

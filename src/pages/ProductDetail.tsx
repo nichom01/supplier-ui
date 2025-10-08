@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, ShoppingCart, Plus, Minus } from 'lucide-react'
 import { toast } from 'sonner'
-import { formatCurrency, getProductImageUrl } from '@/lib/utils'
+import { formatCurrency, getProductImageUrls } from '@/lib/utils'
 
 export default function ProductDetail() {
     const { id } = useParams<{ id: string }>()
@@ -94,14 +94,8 @@ export default function ProductDetail() {
 
     const totalPrice = (product.price || 0) * quantity
 
-    // Build image array for carousel
-    const allImages = product.images && product.images.length > 0
-        ? product.images
-        : product.image
-            ? [product.image]
-            : []
-
-    const currentImage = allImages[selectedImageIndex]
+    // Build image URLs using SKU-based convention
+    const allImages = getProductImageUrls(product.sku)
 
     return (
         <div className="space-y-6">
@@ -117,7 +111,7 @@ export default function ProductDetail() {
                         <CardContent className="p-0">
                             <div className="aspect-square bg-background flex items-center justify-center">
                                 <img
-                                    src={getProductImageUrl(currentImage)}
+                                    src={allImages[selectedImageIndex]}
                                     alt={product.name}
                                     className="w-full h-full object-contain"
                                 />
@@ -139,7 +133,7 @@ export default function ProductDetail() {
                                     }`}
                                 >
                                     <img
-                                        src={getProductImageUrl(img)}
+                                        src={img}
                                         alt={`${product.name} - Image ${index + 1}`}
                                         className="w-full h-full object-contain"
                                     />

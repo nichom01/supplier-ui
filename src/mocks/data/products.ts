@@ -11,8 +11,7 @@ export const mockProducts: Product[] = [
         category: "Electronics",
         unit_of_measure: "piece",
         price: 29.99,
-        product_type: "sale",
-        image: "ELEC-001.jpg"
+        product_type: "sale"
     },
     {
         product_id: 2,
@@ -24,9 +23,7 @@ export const mockProducts: Product[] = [
         category: "Furniture",
         unit_of_measure: "piece",
         price: 249.99,
-        product_type: "sale",
-        image: "FURN-045.jpg",
-        images: ["FURN-045.jpg", "FURN-045-1.jpg", "FURN-045-2.jpg"]
+        product_type: "sale"
     },
     {
         product_id: 3,
@@ -38,8 +35,7 @@ export const mockProducts: Product[] = [
         category: "Clothing",
         unit_of_measure: "piece",
         price: 19.99,
-        product_type: "sale",
-        image: "CLTH-102.jpg"
+        product_type: "sale"
     },
     {
         product_id: 4,
@@ -51,9 +47,7 @@ export const mockProducts: Product[] = [
         category: "Electronics",
         unit_of_measure: "piece",
         price: 89.99,
-        product_type: "sale",
-        image: "ELEC-002.jpg",
-        images: ["ELEC-002.jpg", "ELEC-002-1.jpg"]
+        product_type: "sale"
     },
     {
         product_id: 5,
@@ -65,9 +59,7 @@ export const mockProducts: Product[] = [
         category: "Furniture",
         unit_of_measure: "piece",
         price: 499.99,
-        product_type: "sale",
-        image: "FURN-046.jpg",
-        images: ["FURN-046.jpg", "FURN-046-1.jpg", "FURN-046-2.jpg", "FURN-046-3.jpg"]
+        product_type: "sale"
     },
     {
         product_id: 6,
@@ -79,8 +71,7 @@ export const mockProducts: Product[] = [
         category: "Electronics",
         unit_of_measure: "piece",
         price: 39.99,
-        product_type: "sale",
-        image: "ELEC-003.jpg"
+        product_type: "sale"
     },
     // Hire products
     {
@@ -93,8 +84,7 @@ export const mockProducts: Product[] = [
         category: "Electronics",
         unit_of_measure: "piece",
         daily_hire_rate: 75.00,
-        product_type: "hire",
-        image: "PROJ-001.jpg"
+        product_type: "hire"
     },
     {
         product_id: 8,
@@ -106,9 +96,7 @@ export const mockProducts: Product[] = [
         category: "Electronics",
         unit_of_measure: "piece",
         daily_hire_rate: 120.00,
-        product_type: "hire",
-        image: "CAM-001.jpg",
-        images: ["CAM-001.jpg", "CAM-001-1.jpg", "CAM-001-2.jpg"]
+        product_type: "hire"
     },
     {
         product_id: 9,
@@ -120,7 +108,6 @@ export const mockProducts: Product[] = [
         category: "Event Equipment",
         unit_of_measure: "piece",
         daily_hire_rate: 200.00,
-        product_type: "hire",
-        image: "EVENT-001.jpg"
+        product_type: "hire"
     }
 ]

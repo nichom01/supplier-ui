@@ -131,7 +131,7 @@ export default function Products() {
                     <Card key={product.product_id} className="flex flex-col">
                         <div className="relative w-full h-48 overflow-hidden bg-background">
                             <img
-                                src={getProductImageUrl(product.image)}
+                                src={getProductImageUrl(product.sku)}
                                 alt={product.name}
                                 className="w-full h-full object-contain"
                             />

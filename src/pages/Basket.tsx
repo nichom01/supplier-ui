@@ -109,7 +109,7 @@ export default function Cart() {
                                         {/* Product Image */}
                                         <div className="w-24 h-24 bg-background rounded overflow-hidden flex-shrink-0">
                                             <img
-                                                src={getProductImageUrl(item.product.image)}
+                                                src={getProductImageUrl(item.product.sku)}
                                                 alt={item.product.name}
                                                 className="w-full h-full object-contain"
                                             />

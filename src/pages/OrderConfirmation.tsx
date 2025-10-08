@@ -233,7 +233,7 @@ export default function OrderConfirmation() {
                                             {/* Product Image */}
                                             <div className="w-16 h-16 bg-background rounded-md overflow-hidden flex-shrink-0">
                                                 <img
-                                                    src={getProductImageUrl(product?.image)}
+                                                    src={getProductImageUrl(product?.sku)}
                                                     alt={product?.name || 'Product'}
                                                     className="w-full h-full object-contain"
                                                 />

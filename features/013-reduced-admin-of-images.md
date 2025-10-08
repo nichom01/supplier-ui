@@ -1,0 +1,1 @@
+I would like to be able to drop the images in the assets folder and the website automatically pick them up by convention (using the suggested productid.jpg and productid-1 for subimages) rather than having to maintain the links in the data and display no image if there is no image

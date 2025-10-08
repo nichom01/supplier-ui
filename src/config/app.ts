@@ -18,7 +18,7 @@ type AppConfigType = {
 export const appConfig: AppConfigType = {
     name: import.meta.env.VITE_APP_NAME ?? "UI Builder",
     github: {
-        title: "React Shadcn Starter",
+        title: "Hire Company",
         url: "https://github.com/nichom01/base-ui",
     },
     author: {
