@@ -2,6 +2,25 @@
 
 React + Vite + TypeScript template for building apps with shadcn/ui.
 
+## Gallery
+
+### Sign In
+![Sign In](src/assets/images/products/screenshots/signIn.png)
+
+### Shopping
+![Shopping](src/assets/images/products/screenshots/shopping.png)
+
+### Customer Maintenance
+![Customer Maintenance](src/assets/images/products/screenshots/customerMaintenance.png)
+
+### Pricing Maintenance
+![Pricing Maintenance](src/assets/images/products/screenshots/pricingMaintenance.png)
+
+### Management Info
+![Management Info](src/assets/images/products/screenshots/managementInfo.png)
+
+
+
 ## Getting Started
 
 ```bash
