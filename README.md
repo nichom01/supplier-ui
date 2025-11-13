@@ -1,4 +1,4 @@
-# React / Shadcn
+# Technology
 
 React + Vite + TypeScript with shadcn/ui.
 
